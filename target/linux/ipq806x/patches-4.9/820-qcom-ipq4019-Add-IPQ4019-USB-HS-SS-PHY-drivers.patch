@@ -320,6 +320,17 @@ Changed:
 +#include <linux/of_device.h>
 +#include <linux/qcom_scm.h>
 +
++#define USB_CALIBRATION_CMD	0x10
++#define USB3PHY_SPARE_1		0x7FC
++#define RX_LOS_1		0x7C8
++#define MISC_SOURCE_REG		0x21c
++#define CDR_CONTROL_REG_1	0x80
++#define PCS_INTERNAL_CONTROL14	0x364
++#define MMD1_REG_REG_MASK	(0x7F << 8)
++#define OTP_MASK		(0x7F << 5)
++#define MMD1_REG_AUTOLOAD_MASK	(0x1 << 7)
++#define SPARE_1_BIT14_MASK	(0x1 << 14)
++
 +struct qca_uni_ss_phy {
 +	struct usb_phy phy;
 +	struct device *dev;
@@ -338,17 +349,6 @@ Changed:
 +	/* assert SS PHY POR reset */
 +	reset_control_assert(phy->por_rst);
 +}
-+
-+#define USB_CALIBRATION_CMD	0x10
-+#define USB3PHY_SPARE_1		0x7FC
-+#define RX_LOS_1		0x7C8
-+#define MISC_SOURCE_REG		0x21c
-+#define CDR_CONTROL_REG_1	0x80
-+#define PCS_INTERNAL_CONTROL14	0x364
-+#define MMD1_REG_REG_MASK	(0x7F << 8)
-+#define OTP_MASK		(0x7F << 5)
-+#define MMD1_REG_AUTOLOAD_MASK	(0x1 << 7)
-+#define SPARE_1_BIT14_MASK	(0x1 << 14)
 +
 +int qca_uni_ss_phy_usb_los_calibration(void __iomem *base)
 +{
