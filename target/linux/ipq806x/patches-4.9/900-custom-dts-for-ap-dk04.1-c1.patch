@@ -1,0 +1,464 @@
+diff --git a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts
+index 47202d2..1c2984f 100644
+--- a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts
++++ b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts
+@@ -15,7 +15,344 @@
+  */
+ 
+ #include "qcom-ipq4019-ap.dk04.1.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/input/input.h>
++#include <dt-bindings/soc/qcom,tcsr.h>
+ 
+ / {
+ 	model = "Qualcomm Technologies, Inc. IPQ40xx/AP-DK04.1-C1";
++
++	qcom,board-id = <8 0>;
++	qcom,msm-id = <0x111 0>;
++	qcom,pmic-id = <0 0 0 0>;
++
++	memory {
++		device_type = "memory";
++		reg = <0x80000000 0x10000000>; /* 256MB */
++	};
++
++	reserved-memory {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		ranges;
++		rsvd1@87000000 {
++			/* Reserved for other subsystem */
++			reg = <0x87000000 0x500000>;
++			no-map;
++		};
++		wifi_dump@87500000 {
++			reg = <0x87500000 0x600000>;
++			no-map;
++		};
++
++		rsvd2@87B00000 {
++			/* Reserved for other subsystem */
++			reg = <0x87B00000 0x500000>;
++			no-map;
++		};
++	};
++
++	chosen {
++		bootargs = "rootfsname=rootfs rootwait initcall_debug";
++	};
++
++	soc {
++		pinctrl@0x01000000 {
++			mdio_pins: mdio_pinmux {
++				mux_1 {
++					pins = "gpio6";
++					function = "mdio0";
++					bias-bus-hold;
++				};
++				mux_2 {
++					pins = "gpio7";
++					function = "mdc";
++					bias-bus-hold;
++				};
++			};
++		};
++
++		pcie0: qcom,pcie@80000 {
++			compatible = "qcom,msm_pcie";
++			cell-index = <0>;
++			qcom,ctrl-amt = <1>;
++
++			reg = <0x80000 0x2000>,
++			      <0x99000 0x800>,
++			      <0x40000000 0xf1d>,
++			      <0x40000f20 0xa8>,
++			      <0x40100000 0x1000>,
++			      <0x40200000 0x100000>,
++			      <0x40300000 0xd00000>;
++			reg-names = "parf", "phy", "dm_core", "elbi",
++				"conf", "io", "bars";
++
++			#address-cells = <0>;
++			interrupt-parent = <&pcie0>;
++			interrupts = <0 1 2 3 4 5 6 7 8 9 10 11 12>;
++			#interrupt-cells = <1>;
++			interrupt-map-mask = <0xffffffff>;
++			interrupt-map = <0 &intc 0 141 0
++				1 &intc 0 142 0
++				2 &intc 0 143 0
++				3 &intc 0 144 0
++				4 &intc 0 145 0
++				5 &intc 0 146 0
++				6 &intc 0 147 0
++				7 &intc 0 148 0
++				8 &intc 0 149 0
++				9 &intc 0 150 0
++				10 &intc 0 151 0
++				11 &intc 0 152 0 >;
++
++			interrupt-names = "int_msi", "int_a", "int_b", "int_c", "int_d",
++				"int_pls_pme", "int_pme_legacy", "int_pls_err",
++				"int_aer_legacy", "int_pls_link_up",
++				"int_pls_link_down", "int_bridge_flush_n","int_wake";
++
++			qcom,ep-latency = <10>;
++
++			clocks = <&gcc GCC_PCIE_AHB_CLK>,
++				<&gcc GCC_PCIE_AXI_M_CLK>,
++				<&gcc GCC_PCIE_AXI_S_CLK>;
++
++			clock-names =	"pcie_0_cfg_ahb_clk",
++					"pcie_0_mstr_axi_clk",
++					"pcie_0_slv_axi_clk";
++
++			max-clock-frequency-hz = <0>, <0>, <0>;
++
++			resets = <&gcc PCIE_AXI_M_ARES>,
++				<&gcc PCIE_AXI_S_ARES>,
++				<&gcc PCIE_PIPE_ARES>,
++				<&gcc PCIE_AXI_M_VMIDMT_ARES>,
++				<&gcc PCIE_AXI_S_XPU_ARES>,
++				<&gcc PCIE_PARF_XPU_ARES>,
++				<&gcc PCIE_PHY_ARES>,
++				<&gcc PCIE_AXI_M_STICKY_ARES>,
++				<&gcc PCIE_PIPE_STICKY_ARES>,
++				<&gcc PCIE_PWR_ARES>,
++				<&gcc PCIE_AHB_ARES>,
++				<&gcc PCIE_PHY_AHB_ARES>;
++
++			reset-names = "pcie_rst_axi_m_ares",
++				"pcie_rst_axi_s_ares",
++				"pcie_rst_pipe_ares",
++				"pcie_rst_axi_m_vmidmt_ares",
++				"pcie_rst_axi_s_xpu_ares",
++				"pcie_rst_parf_xpu_ares",
++				"pcie_rst_phy_ares",
++				"pcie_rst_axi_m_sticky_ares",
++				"pcie_rst_pipe_sticky_ares",
++				"pcie_rst_pwr_ares",
++				"pcie_rst_ahb_res",
++				"pcie_rst_phy_ahb_ares";
++
++			status = "ok";
++			perst-gpio = <&tlmm 38 0>;
++			wake-gpio = <&tlmm 40 0>;
++			clkreq-gpio = <&tlmm 39 0>;
++		};
++
++		watchdog@b017000 {
++			status = "ok";
++		};
++
++		edma@c080000 {
++			compatible = "qcom,ess-edma";
++			reg = <0xc080000 0x8000>;
++			qcom,page-mode = <0>;
++			qcom,rx_head_buf_size = <1540>;
++			qcom,mdio_supported;
++			qcom,poll_required = <1>;
++			qcom,num_gmac = <1>;
++			interrupts = <0  65 IRQ_TYPE_EDGE_RISING
++				      0  66 IRQ_TYPE_EDGE_RISING
++				      0  67 IRQ_TYPE_EDGE_RISING
++				      0  68 IRQ_TYPE_EDGE_RISING
++				      0  69 IRQ_TYPE_EDGE_RISING
++				      0  70 IRQ_TYPE_EDGE_RISING
++				      0  71 IRQ_TYPE_EDGE_RISING
++				      0  72 IRQ_TYPE_EDGE_RISING
++				      0  73 IRQ_TYPE_EDGE_RISING
++				      0  74 IRQ_TYPE_EDGE_RISING
++				      0  75 IRQ_TYPE_EDGE_RISING
++				      0  76 IRQ_TYPE_EDGE_RISING
++				      0  77 IRQ_TYPE_EDGE_RISING
++				      0  78 IRQ_TYPE_EDGE_RISING
++				      0  79 IRQ_TYPE_EDGE_RISING
++				      0  80 IRQ_TYPE_EDGE_RISING
++				      0 240 IRQ_TYPE_EDGE_RISING
++				      0 241 IRQ_TYPE_EDGE_RISING
++				      0 242 IRQ_TYPE_EDGE_RISING
++				      0 243 IRQ_TYPE_EDGE_RISING
++				      0 244 IRQ_TYPE_EDGE_RISING
++				      0 245 IRQ_TYPE_EDGE_RISING
++				      0 246 IRQ_TYPE_EDGE_RISING
++				      0 247 IRQ_TYPE_EDGE_RISING
++				      0 248 IRQ_TYPE_EDGE_RISING
++				      0 249 IRQ_TYPE_EDGE_RISING
++				      0 250 IRQ_TYPE_EDGE_RISING
++				      0 251 IRQ_TYPE_EDGE_RISING
++				      0 252 IRQ_TYPE_EDGE_RISING
++				      0 253 IRQ_TYPE_EDGE_RISING
++				      0 254 IRQ_TYPE_EDGE_RISING
++				      0 255 IRQ_TYPE_EDGE_RISING>;
++
++			status = "ok";
++
++			gmac0: gmac0 {
++				local-mac-address = [00 00 00 00 00 00];
++				vlan_tag = <1 0x3f>;
++			};
++		};
++
++		mdio@90000 {
++			status = "ok";
++			pinctrl-0 = <&mdio_pins>;
++			pinctrl-names = "default";
++			phy-reset-gpio = <&tlmm 47 0>;
++			status = "ok";
++			bias-disable;
++
++			phy0: ethernet-phy@0 {
++				reg = <0>;
++			};
++
++			phy1: ethernet-phy@1 {
++				reg = <1>;
++			};
++
++			phy2: ethernet-phy@2 {
++				reg = <2>;
++			};
++
++			phy3: ethernet-phy@3 {
++				reg = <3>;
++			};
++
++			phy5: ethernet-phy@4 {
++				reg = <4>;
++			};
++		};
++
++		ess-switch@c000000 {
++			status = "ok";
++		};
++
++		ess-psgmii@98000 {
++			status = "ok";
++		};
++
++		wifi0: wifi@a000000 {
++			status = "ok";
++			core-id = <0x0>;
++			qca,msi_addr = <0x0b006040>;
++			qca,msi_base = <0x40>;
++			wifi_led_num = <2>;         /* Wifi 2G */
++			wifi_led_source = <0>;      /* source id 0 */
++			qcom,mtd-name = "0:ART";
++			qcom,cal-offset = <0x1000>;
++			qcom,cal-len = <12064>;
++		};
++
++		wifi1: wifi@a800000 {
++			status = "ok";
++			core-id = <0x1>;
++			qca,msi_addr = <0x0b006040>;
++			qca,msi_base = <0x50>;
++			wifi_led_num = <1>;         /* Wifi 5G */
++			wifi_led_source = <2>;      /* source id 2 */
++			qcom,mtd-name = "0:ART";
++			qcom,cal-offset = <0x5000>;
++			qcom,cal-len = <12064>;
++		};
++
++		nand: qpic-nand@79b0000 {
++			status = "disabled";
++		};
++	};
++};
++
++&spi_0 { /* BLSP1 QUP1 */
++	pinctrl-0 = <&spi_0_pins>;
++	pinctrl-names = "default";
++	status = "ok";
++	cs-gpios = <&tlmm 12 0>;
++
++	mx25l25635e@0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		reg = <0>;
++		compatible = "mx25l25635e", "jedec,spi-nor";
++		spi-max-frequency = <24000000>;
++
++		partitions {
++			compatible = "fixed-partitions";
++			#address-cells = <1>;
++			#size-cells = <1>;
++
++			partition0@0 {
++				label = "0:SBL1";
++				reg = <0x00000000 0x00040000>;
++				read-only;
++			};
++			partition1@40000 {
++				label = "0:MIBIB";
++				reg = <0x00040000 0x00020000>;
++				read-only;
++			};
++			partition2@60000 {
++				label = "0:QSEE";
++				reg = <0x00060000 0x00060000>;
++				read-only;
++			};
++			partition3@c0000 {
++				label = "0:CDT";
++				reg = <0x000c0000 0x00010000>;
++				read-only;
++			};
++			partition4@d0000 {
++				label = "0:DDRPARAMS";
++				reg = <0x000d0000 0x00010000>;
++				read-only;
++			};
++			partition5@e0000 {
++				label = "0:APPSBLENV"; /* uboot env*/
++				reg = <0x000e0000 0x00010000>;
++				read-only;
++			};
++			partition6@f0000 {
++				label = "0:APPSBL"; /* uboot */
++				reg = <0x000f0000 0x00080000>;
++				read-only;
++			};
++			partition7@170000 {
++				label = "0:ART";
++				reg = <0x00170000 0x00010000>;
++				read-only;
++			};
++			partition8@180000 {
++				label = "kernel";
++				reg = <0x00180000 0x00400000>;
++			};
++			partition9@580000 {
++				label = "rootfs";
++				reg = <0x00580000 0x01600000>;
++			};
++			partition9@180000 {
++				label = "firmware";
++				reg = <0x00180000 0x01a00000>;
++			};
++		};
++	};
++
++	m25p80@0 {
++		#address-cells = <1>;
++		#size-cells = <0>;
++		compatible = "n25q128a11";
++		reg = <0>;
++		spi-max-frequency = <24000000>;
++		status = "disabled";
++	};
+ };
+diff --git a/drivers/clk/qcom/gcc-ipq4019.c b/drivers/clk/qcom/gcc-ipq4019.c
+index d0a5d0e..99a7bdb 100644
+--- a/drivers/clk/qcom/gcc-ipq4019.c
++++ b/drivers/clk/qcom/gcc-ipq4019.c
+@@ -1289,6 +1289,17 @@ static const struct qcom_reset_map gcc_ipq4019_resets[] = {
+ 	[GCC_TCSR_BCR] = {0x22000, 0},
+ 	[GCC_MPM_BCR] = {0x24000, 0},
+ 	[GCC_SPDM_BCR] = {0x25000, 0},
++	[ESS_MAC1_ARES] = {0x1200C, 0},
++	[ESS_MAC2_ARES] = {0x1200C, 1},
++	[ESS_MAC3_ARES] = {0x1200C, 2},
++	[ESS_MAC4_ARES] = {0x1200C, 3},
++	[ESS_MAC5_ARES] = {0x1200C, 4},
++	[ESS_PSGMII_ARES] = {0x1200C, 5},
++	[ESS_MAC1_CLK_DIS] = {0x1200C, 8},
++	[ESS_MAC2_CLK_DIS] = {0x1200C, 9},
++	[ESS_MAC3_CLK_DIS] = {0x1200C, 10},
++	[ESS_MAC4_CLK_DIS] = {0x1200C, 11},
++	[ESS_MAC5_CLK_DIS] = {0x1200C, 12},
+ };
+ 
+ static const struct regmap_config gcc_ipq4019_regmap_config = {
+diff --git a/drivers/net/phy/mdio-ipq40xx.c b/drivers/net/phy/mdio-ipq40xx.c
+index 335d531..cb3d81b 100644
+--- a/drivers/net/phy/mdio-ipq40xx.c
++++ b/drivers/net/phy/mdio-ipq40xx.c
+@@ -22,6 +22,7 @@
+ #include <linux/of_mdio.h>
+ #include <linux/phy.h>
+ #include <linux/platform_device.h>
++#include <linux/of_gpio.h>
+ 
+ #define MDIO_CTRL_0_REG		0x40
+ #define MDIO_CTRL_1_REG		0x44
+@@ -122,11 +123,58 @@ static int ipq40xx_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
+ 	return 0;
+ }
+ 
++static int ipq40xx_phy_reset(struct platform_device *pdev)
++{
++	struct device_node *mdio_node;
++	int phy_reset_gpio_number;
++	int ret;
++
++	mdio_node = of_find_node_by_name(NULL, "mdio");
++	if (!mdio_node) {
++		dev_err(&pdev->dev, "Could not find mdio node\n");
++		return -ENOENT;
++	}
++
++	ret = of_get_named_gpio(mdio_node, "phy-reset-gpio", 0);
++	if (ret < 0) {
++		dev_warn(&pdev->dev, "Could not find DT gpio phy-reset-gpio missing/malformed ret=%d\n",ret);
++		return 0;
++	}
++	phy_reset_gpio_number = ret;
++
++	ret = gpio_request(phy_reset_gpio_number, "phy-reset-gpio");
++	if (ret) {
++		dev_err(&pdev->dev, "Can't get phy-reset-gpio ret=%d\n", ret);
++		return ret;
++	}
++
++	ret = gpio_direction_output(phy_reset_gpio_number, 0x0);
++	if (ret) {
++		dev_err(&pdev->dev, "Can't set direction for phy-reset-gpio ret=%d\n", ret);
++		goto phy_reset_out;
++	}
++
++	usleep_range(1000, 10005);
++
++	gpio_set_value(phy_reset_gpio_number, 0x01);
++
++phy_reset_out:
++	gpio_free(phy_reset_gpio_number);
++
++	return ret;
++}
++
+ static int ipq40xx_mdio_probe(struct platform_device *pdev)
+ {
+ 	struct ipq40xx_mdio_data *am;
+ 	struct resource *res;
+-	int i;
++	int i, ret;
++
++	ret = ipq40xx_phy_reset(pdev);
++	if (ret) {
++		dev_err(&pdev->dev, "Could not find qca8075 reset gpio\n");
++		return ret;
++	}
+ 
+ 	am = devm_kzalloc(&pdev->dev, sizeof(*am), GFP_KERNEL);
+ 	if (!am)
+diff --git a/include/dt-bindings/clock/qcom,gcc-ipq4019.h b/include/dt-bindings/clock/qcom,gcc-ipq4019.h
+index 6240e5b..9a299e7 100644
+--- a/include/dt-bindings/clock/qcom,gcc-ipq4019.h
++++ b/include/dt-bindings/clock/qcom,gcc-ipq4019.h
+@@ -154,5 +154,16 @@
+ #define GCC_QDSS_BCR					69
+ #define GCC_MPM_BCR					70
+ #define GCC_SPDM_BCR					71
++#define ESS_MAC1_ARES					72
++#define ESS_MAC2_ARES					73
++#define ESS_MAC3_ARES					74
++#define ESS_MAC4_ARES					75
++#define ESS_MAC5_ARES					76
++#define ESS_PSGMII_ARES					77
++#define ESS_MAC1_CLK_DIS				78
++#define ESS_MAC2_CLK_DIS				79
++#define ESS_MAC3_CLK_DIS				80
++#define ESS_MAC4_CLK_DIS				81
++#define ESS_MAC5_CLK_DIS				82
+ 
+ #endif

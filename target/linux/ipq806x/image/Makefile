@@ -280,15 +280,18 @@ endef
 
 define Device/AP-DK04.1-C1
 	$(call Device/FitImage)
-	$(call Device/UbiFit)
 	DEVICE_DTS := qcom-ipq4019-ap.dk04.1-c1
 	KERNEL_LOADADDR := 0x80208000
 	KERNEL_INSTALL := 1
-	KERNEL_SIZE := 4048k
+	KERNEL_SIZE := 4096k
 	BLOCKSIZE := 128k
 	PAGESIZE := 2048
 	BOARD_NAME := ap-dk04.1-c1
 	DEVICE_TITLE := QCA AP-DK04.1-C1
+	IMAGES = sysupgrade.bin
+	FILESYSTEMS := squashfs
+	IMAGE/sysupgrade.bin := append-kernel | pad-to $$$${KERNEL_SIZE} | append-rootfs | pad-rootfs | append-metadata
+	DEVICE_PACKAGES := kmod-usb-phy-qcom-ipq4019 ath10k-firmware-qca4019
 endef
 
 TARGET_DEVICES += AP148 AP148-legacy C2600 D7800 DB149 EA8500 FRITZ4040 R7500 \
