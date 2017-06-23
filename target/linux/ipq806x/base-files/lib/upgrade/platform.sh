@@ -32,7 +32,6 @@ EOF
 platform_do_upgrade() {
 	case "$(board_name)" in
 	ap148 |\
-	ap-dk04.1-c1 |\
 	d7800 |\
 	nbg6817 |\
 	r7500 |\
