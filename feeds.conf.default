@@ -2,6 +2,7 @@ src-git packages https://github.com/ptpt52/lede-packages.git
 src-git luci https://github.com/ptpt52/lede-luci.git
 src-git routing https://git.lede-project.org/feed/routing.git
 src-git telephony https://git.lede-project.org/feed/telephony.git
+src-git puppies https://gitlab.com/male-puppies/openwrt-ac-puppies.git;lede-puppies
 src-git ptpt52 https://github.com/ptpt52/com.ptpt52.openwrt.git
 #src-git video https://github.com/openwrt/video.git
 #src-git targets https://github.com/openwrt/targets.git
