@@ -1,0 +1,15 @@
+diff --git a/src/rfc1035.c b/src/rfc1035.c
+index 26f5301..a9cc3d5 100644
+--- a/src/rfc1035.c
++++ b/src/rfc1035.c
+@@ -1225,8 +1225,8 @@ size_t answer_request(struct dns_header *header, char *limit, size_t qlen,
+ 
+   /* Clear buffer beyond request to avoid risk of
+      information disclosure. */
+-  memset(((char *)header) + qlen, 0, 
+-	 (limit - ((char *)header)) - qlen);
++  if ((limit - ((char *)header)) > qlen)
++	  memset(((char *)header) + qlen, 0, (limit - ((char *)header)) - qlen);
+   
+   if (ntohs(header->ancount) != 0 ||
+       ntohs(header->nscount) != 0 ||
