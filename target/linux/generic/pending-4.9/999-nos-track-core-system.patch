@@ -1,8 +1,8 @@
 diff --git a/arch/x86/mm/pat.c b/arch/x86/mm/pat.c
-index 83e701f..7f5a543 100644
+index 89d7907..34d95fd 100644
 --- a/arch/x86/mm/pat.c
 +++ b/arch/x86/mm/pat.c
-@@ -760,6 +760,8 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+@@ -756,6 +756,8 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  /* This check is needed to avoid cache aliasing when PAT is enabled */
  static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  {
@@ -11,7 +11,7 @@ index 83e701f..7f5a543 100644
  	u64 from = ((u64)pfn) << PAGE_SHIFT;
  	u64 to = from + size;
  	u64 cursor = from;
-@@ -773,6 +775,7 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+@@ -769,6 +771,7 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  		cursor += PAGE_SIZE;
  		pfn++;
  	}
@@ -21,10 +21,10 @@ index 83e701f..7f5a543 100644
  #endif /* CONFIG_STRICT_DEVMEM */
 diff --git a/include/linux/nos_mempool.h b/include/linux/nos_mempool.h
 new file mode 100644
-index 0000000..a787e0e
+index 0000000..c349810
 --- /dev/null
 +++ b/include/linux/nos_mempool.h
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,64 @@
 +#ifndef _NOS_MEMPOOL_H
 +#define _NOS_MEMPOOL_H
 +
@@ -67,8 +67,10 @@ index 0000000..a787e0e
 +		pool->nr_used++;
 +		pool->nr_free--;
 +	} else {
-+		pr_warn_ratelimited("nos_mempool oom: %s, nr_used: %d, nr_free: %d\n",
-+							pool->name, pool->nr_used, pool->nr_free);
++		if (pool->nr_used != 0) {
++			pr_warn_ratelimited("nos_mempool oom: %s, nr_used: %d, nr_free: %d\n",
++					pool->name, pool->nr_used, pool->nr_free);
++		}
 +	}
 +	spin_unlock_bh(&pool->lock);
 +	return data;
@@ -206,19 +208,20 @@ index 0000000..a4cea06
 +
 +#endif /* _NOS_TRACK_PRIV_H__ */
 diff --git a/include/linux/skbuff.h b/include/linux/skbuff.h
-index 9a0c945..63d5f0e 100644
+index 56f4007..abb01b2 100644
 --- a/include/linux/skbuff.h
 +++ b/include/linux/skbuff.h
-@@ -39,6 +39,8 @@
- #include <linux/in6.h>
+@@ -40,6 +40,9 @@
  #include <linux/if_packet.h>
  #include <net/flow.h>
+ 
 +/* define skb/ntrack pkt priv size */
 +#include <linux/nos_track.h>
- 
++
  /* The interface for checksum offload between the stack and networking drivers
   * is as follows...
-@@ -804,6 +806,9 @@ struct sk_buff {
+  *
+@@ -807,6 +810,9 @@ struct sk_buff {
  				*data;
  	unsigned int		truesize;
  	atomic_t		users;
@@ -399,10 +402,10 @@ index 87125b7..72afceb 100644
  	int "CPU kernel log buffer size contribution (13 => 8 KB, 17 => 128KB)"
  	depends on SMP
 diff --git a/init/main.c b/init/main.c
-index a017fc5..f939d73 100644
+index 3855fa4..0e04245 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -503,6 +503,7 @@ static void __init mm_init(void)
+@@ -499,6 +499,7 @@ static void __init mm_init(void)
  	ioremap_huge_init();
  }
  
@@ -410,7 +413,7 @@ index a017fc5..f939d73 100644
  asmlinkage __visible void __init start_kernel(void)
  {
  	char *command_line;
-@@ -530,6 +531,7 @@ asmlinkage __visible void __init start_kernel(void)
+@@ -526,6 +527,7 @@ asmlinkage __visible void __init start_kernel(void)
  	page_address_init();
  	pr_notice("%s", linux_banner);
  	setup_arch(&command_line);
@@ -419,18 +422,18 @@ index a017fc5..f939d73 100644
  	mangle_bootargs(command_line);
  	setup_command_line(command_line);
 diff --git a/kernel/Makefile b/kernel/Makefile
-index d8e9b98..b1d8594 100644
+index 5fe0d8c..fddef0b 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
-@@ -8,7 +8,7 @@ obj-y     = fork.o exec_domain.o panic.o \
- 	    signal.o sys.o kmod.o workqueue.o pid.o task_work.o \
- 	    extable.o params.o \
- 	    kthread.o sys_ni.o nsproxy.o \
--	    notifier.o ksysfs.o cred.o reboot.o \
-+	    notifier.o ksysfs.o cred.o reboot.o nos_track.o \
+@@ -11,6 +11,8 @@ obj-y     = fork.o exec_domain.o panic.o \
+ 	    notifier.o ksysfs.o cred.o reboot.o \
  	    async.o range.o smpboot.o ucount.o
  
++obj-y += nos_track.o
++
  obj-$(CONFIG_MULTIUSER) += groups.o
+ 
+ ifdef CONFIG_FUNCTION_TRACER
 diff --git a/kernel/nos_track.c b/kernel/nos_track.c
 new file mode 100644
 index 0000000..1e45b87
@@ -1050,7 +1053,7 @@ index 0000000..1e45b87
 +}
 +__setup("ntrack_mem", set_ntrack_mem_size);
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index c1095cd..0a51078 100644
+index 265e0d0..a20adac 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
 @@ -280,6 +280,16 @@ static int min_extfrag_threshold;
@@ -1177,7 +1180,7 @@ index 7e7b7ce..1dc7212 100644
  	CHECK_SKB_FIELD(csum);
  	CHECK_SKB_FIELD(hash);
 diff --git a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
-index 6bd1508..bc93f39 100644
+index 9b81c7c..149f956 100644
 --- a/net/netfilter/nf_conntrack_core.c
 +++ b/net/netfilter/nf_conntrack_core.c
 @@ -1094,6 +1094,9 @@ void nf_conntrack_free(struct nf_conn *ct)
