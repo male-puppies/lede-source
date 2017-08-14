@@ -1,8 +1,8 @@
 diff --git a/arch/x86/mm/pat.c b/arch/x86/mm/pat.c
-index 3f1bb4f..6d8972d 100644
+index 6ad687d..8e5fa5b 100644
 --- a/arch/x86/mm/pat.c
 +++ b/arch/x86/mm/pat.c
-@@ -742,6 +742,8 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+@@ -746,6 +746,8 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  /* This check is needed to avoid cache aliasing when PAT is enabled */
  static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  {
@@ -11,7 +11,7 @@ index 3f1bb4f..6d8972d 100644
  	u64 from = ((u64)pfn) << PAGE_SHIFT;
  	u64 to = from + size;
  	u64 cursor = from;
-@@ -758,6 +760,7 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+@@ -762,6 +764,7 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  		cursor += PAGE_SIZE;
  		pfn++;
  	}
@@ -208,7 +208,7 @@ index 0000000..a4cea06
 +
 +#endif /* _NOS_TRACK_PRIV_H__ */
 diff --git a/include/linux/skbuff.h b/include/linux/skbuff.h
-index f72eea2..6fb2e54 100644
+index d443d9a..ec1f04e 100644
 --- a/include/linux/skbuff.h
 +++ b/include/linux/skbuff.h
 @@ -39,6 +39,9 @@
@@ -221,7 +221,7 @@ index f72eea2..6fb2e54 100644
  /* A. Checksumming of received packets by device.
   *
   * CHECKSUM_NONE:
-@@ -714,6 +717,9 @@ struct sk_buff {
+@@ -708,6 +711,9 @@ struct sk_buff {
  				*data;
  	unsigned int		truesize;
  	atomic_t		users;
@@ -274,10 +274,10 @@ index fde4068..0780d58 100644
  static inline void nf_ct_put(struct nf_conn *ct)
  {
 diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index 16028e1..59dc04a 100644
+index ebd10e6..0b8ae96 100644
 --- a/include/uapi/linux/Kbuild
 +++ b/include/uapi/linux/Kbuild
-@@ -462,3 +462,4 @@ header-y += xilinx-v4l2-controls.h
+@@ -461,3 +461,4 @@ header-y += xilinx-v4l2-controls.h
  header-y += zorro.h
  header-y += zorro_ids.h
  header-y += userfaultfd.h
@@ -384,10 +384,10 @@ index 0000000..0854147
 +
 +#endif /* _UAPI_NOS_TRACK_H */
 diff --git a/init/Kconfig b/init/Kconfig
-index be8a0e3..bcdd471 100644
+index 235c7a2..dbb1514 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -840,6 +840,13 @@ config LOG_BUF_SHIFT
+@@ -830,6 +830,13 @@ config LOG_BUF_SHIFT
  		     13 =>  8 KB
  		     12 =>  4 KB
  
@@ -402,10 +402,10 @@ index be8a0e3..bcdd471 100644
  	int "CPU kernel log buffer size contribution (13 => 8 KB, 17 => 128KB)"
  	depends on SMP
 diff --git a/init/main.c b/init/main.c
-index eae7418..e73082f 100644
+index 9e64d70..914c0bf 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -517,6 +517,7 @@ static void __init mm_init(void)
+@@ -494,6 +494,7 @@ static void __init mm_init(void)
  	ioremap_huge_init();
  }
  
@@ -413,16 +413,16 @@ index eae7418..e73082f 100644
  asmlinkage __visible void __init start_kernel(void)
  {
  	char *command_line;
-@@ -549,6 +550,7 @@ asmlinkage __visible void __init start_kernel(void)
+@@ -526,6 +527,7 @@ asmlinkage __visible void __init start_kernel(void)
  	page_address_init();
  	pr_notice("%s", linux_banner);
  	setup_arch(&command_line);
 +	ntrack_mem_reserve();
  	mm_init_cpumask(&init_mm);
- 	mangle_bootargs(command_line);
  	setup_command_line(command_line);
+ 	setup_nr_cpu_ids();
 diff --git a/kernel/Makefile b/kernel/Makefile
-index e1b7438..87a2204 100644
+index 53abf00..72eb918 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
 @@ -11,6 +11,8 @@ obj-y     = fork.o exec_domain.o panic.o \
@@ -1053,10 +1053,10 @@ index 0000000..1e45b87
 +}
 +__setup("ntrack_mem", set_ntrack_mem_size);
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 002ec08..1f7dbaf 100644
+index 999e025..b7c9c26 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -277,6 +277,16 @@ static int min_extfrag_threshold;
+@@ -276,6 +276,16 @@ static int min_extfrag_threshold;
  static int max_extfrag_threshold = 1000;
  #endif
  
@@ -1073,7 +1073,7 @@ index 002ec08..1f7dbaf 100644
  static struct ctl_table kern_table[] = {
  	{
  		.procname	= "sched_child_runs_first",
-@@ -285,6 +295,90 @@ static struct ctl_table kern_table[] = {
+@@ -284,6 +294,90 @@ static struct ctl_table kern_table[] = {
  		.mode		= 0644,
  		.proc_handler	= proc_dointvec,
  	},
@@ -1165,10 +1165,10 @@ index 002ec08..1f7dbaf 100644
  	{
  		.procname	= "sched_min_granularity_ns",
 diff --git a/net/core/skbuff.c b/net/core/skbuff.c
-index 5d5e6c5..09ea9ba 100644
+index 4968b5d..5cc0f9a 100644
 --- a/net/core/skbuff.c
 +++ b/net/core/skbuff.c
-@@ -793,6 +793,10 @@ static void __copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
+@@ -776,6 +776,10 @@ static void __copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
  	memcpy(&new->headers_start, &old->headers_start,
  	       offsetof(struct sk_buff, headers_end) -
  	       offsetof(struct sk_buff, headers_start));
@@ -1180,7 +1180,7 @@ index 5d5e6c5..09ea9ba 100644
  	CHECK_SKB_FIELD(csum);
  	CHECK_SKB_FIELD(hash);
 diff --git a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
-index 027c203..2b6114d 100644
+index 86a3c6f..80b4c9a 100644
 --- a/net/netfilter/nf_conntrack_core.c
 +++ b/net/netfilter/nf_conntrack_core.c
 @@ -889,6 +889,9 @@ void nf_conntrack_free(struct nf_conn *ct)
@@ -1193,36 +1193,7 @@ index 027c203..2b6114d 100644
  	/* A freed object has refcnt == 0, that's
  	 * the golden rule for SLAB_DESTROY_BY_RCU
  	 */
-@@ -922,6 +925,7 @@ init_conntrack(struct net *net, struct nf_conn *tmpl,
- 	struct nf_conn_timeout *timeout_ext;
- 	struct nf_conntrack_zone tmp;
- 	unsigned int *timeouts;
-+	struct nos_flow_tuple nos_flow_tuple;
- 
- 	if (!nf_ct_invert_tuple(&repl_tuple, tuple, l3proto, l4proto)) {
- 		pr_debug("Can't invert tuple.\n");
-@@ -948,6 +952,20 @@ init_conntrack(struct net *net, struct nf_conn *tmpl,
- 		timeouts = l4proto->get_timeouts(net);
- 	}
- 
-+	if ( !(ipv4_is_lbcast(tuple->src.u3.ip) || ipv4_is_lbcast(tuple->dst.u3.ip) ||
-+			ipv4_is_loopback(tuple->src.u3.ip) || ipv4_is_loopback(tuple->dst.u3.ip) ||
-+			ipv4_is_multicast(tuple->src.u3.ip) || ipv4_is_multicast(tuple->dst.u3.ip) ||
-+			ipv4_is_zeronet(tuple->src.u3.ip) || ipv4_is_zeronet(tuple->dst.u3.ip)) )
-+	{
-+		/* roy: nos track init nodes */
-+		nos_flow_tuple.ip_src = tuple->src.u3.ip;
-+		nos_flow_tuple.ip_dst = tuple->dst.u3.ip;
-+		nos_flow_tuple.port_src = tuple->src.u.all;
-+		nos_flow_tuple.port_dst = tuple->dst.u.all;
-+		nos_flow_tuple.proto = tuple->dst.protonum;
-+		nos_track_alloc(&ct->nos_track, &nos_flow_tuple, skb);
-+	}
-+
- 	if (!l4proto->new(ct, skb, dataoff, timeouts)) {
- 		nf_conntrack_free(ct);
- 		pr_debug("init conntrack: can't track with proto module\n");
-@@ -1635,6 +1653,11 @@ int nf_conntrack_init_start(void)
+@@ -1635,6 +1638,11 @@ int nf_conntrack_init_start(void)
  	int max_factor = 8;
  	int i, ret, cpu;
  
