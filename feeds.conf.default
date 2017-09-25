@@ -1,9 +1,9 @@
-src-git packages https://github.com/male-puppies/lede-packages.git
-src-git luci https://github.com/male-puppies/lede-luci.git
-src-git routing https://github.com/male-puppies/lede-routing.git
-src-git telephony https://github.com/male-puppies/lede-telephony.git
+src-git packages https://github.com/male-puppies/lede-packages.git;v3.4-camel
+src-git luci https://github.com/male-puppies/lede-luci.git;v3.4-camel
+src-git routing https://github.com/male-puppies/lede-routing.git;v3.4-camel
+src-git telephony https://github.com/male-puppies/lede-telephony.git;v3.4-camel
 src-git ptpt52 https://github.com/ptpt52/com.ptpt52.openwrt.git
-src-git puppies https://gitlab.com/male-puppies/lede-ac-puppies.git
+src-git puppies https://gitlab.com/male-puppies/lede-ac-puppies.git;v3.3-lede
 #src-git video https://github.com/openwrt/video.git
 #src-git targets https://github.com/openwrt/targets.git
 #src-git management https://github.com/openwrt-management/packages.git

@@ -1,0 +1,112 @@
+diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
+--- a/drivers/net/ppp/ppp_generic.c	2017-09-25 07:39:35.624800037 +0000
++++ b/drivers/net/ppp/ppp_generic.c	2017-09-25 07:39:59.896392861 +0000
+@@ -1632,7 +1632,7 @@
+ 		list = list->next;
+ 		pch = list_entry(list, struct channel, clist);
+ 
+-		spin_lock_bh(&pch->downl);
++		spin_lock(&pch->downl);
+ 		if (pch->chan) {
+ 			if (pch->chan->ops->start_xmit(pch->chan, skb))
+ 				ppp->xmit_pending = NULL;
+@@ -1641,7 +1641,7 @@
+ 			kfree_skb(skb);
+ 			ppp->xmit_pending = NULL;
+ 		}
+-		spin_unlock_bh(&pch->downl);
++		spin_unlock(&pch->downl);
+ 		return;
+ 	}
+ 
+@@ -1771,7 +1771,7 @@
+ 		}
+ 
+ 		/* check the channel's mtu and whether it is still attached. */
+-		spin_lock_bh(&pch->downl);
++		spin_lock(&pch->downl);
+ 		if (pch->chan == NULL) {
+ 			/* can't use this channel, it's being deregistered */
+ 			if (pch->speed == 0)
+@@ -1779,7 +1779,7 @@
+ 			else
+ 				totspeed -= pch->speed;
+ 
+-			spin_unlock_bh(&pch->downl);
++			spin_unlock(&pch->downl);
+ 			pch->avail = 0;
+ 			totlen = len;
+ 			totfree--;
+@@ -1830,7 +1830,7 @@
+ 		 */
+ 		if (flen <= 0) {
+ 			pch->avail = 2;
+-			spin_unlock_bh(&pch->downl);
++			spin_unlock(&pch->downl);
+ 			continue;
+ 		}
+ 
+@@ -1875,14 +1875,14 @@
+ 		len -= flen;
+ 		++ppp->nxseq;
+ 		bits = 0;
+-		spin_unlock_bh(&pch->downl);
++		spin_unlock(&pch->downl);
+ 	}
+ 	ppp->nxchan = i;
+ 
+ 	return 1;
+ 
+  noskb:
+-	spin_unlock_bh(&pch->downl);
++	spin_unlock(&pch->downl);
+ 	if (ppp->debug & 1)
+ 		netdev_err(ppp->dev, "PPP: no memory (fragment)\n");
+ 	++ppp->dev->stats.tx_errors;
+@@ -1897,7 +1897,7 @@
+ 	struct sk_buff *skb;
+ 	struct ppp *ppp;
+ 
+-	spin_lock_bh(&pch->downl);
++	spin_lock(&pch->downl);
+ 	if (pch->chan) {
+ 		while (!skb_queue_empty(&pch->file.xq)) {
+ 			skb = skb_dequeue(&pch->file.xq);
+@@ -1911,7 +1911,7 @@
+ 		/* channel got deregistered */
+ 		skb_queue_purge(&pch->file.xq);
+ 	}
+-	spin_unlock_bh(&pch->downl);
++	spin_unlock(&pch->downl);
+ 	/* see if there is anything from the attached unit to be sent */
+ 	if (skb_queue_empty(&pch->file.xq)) {
+ 		ppp = pch->ppp;
+diff -uNr a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
+--- a/drivers/net/ppp/pptp.c	2017-09-25 07:39:40.124724083 +0000
++++ b/drivers/net/ppp/pptp.c	2017-09-25 07:40:01.008374351 +0000
+@@ -131,7 +131,6 @@
+ 	clear_bit(sock->proto.pptp.src_addr.call_id, callid_bitmap);
+ 	RCU_INIT_POINTER(callid_sock[sock->proto.pptp.src_addr.call_id], NULL);
+ 	spin_unlock(&chan_lock);
+-	synchronize_rcu();
+ }
+ 
+ static int pptp_xmit(struct ppp_channel *chan, struct sk_buff *skb)
+@@ -506,7 +505,6 @@
+ {
+ 	struct sock *sk = sock->sk;
+ 	struct pppox_sock *po;
+-	struct pptp_opt *opt;
+ 	int error = 0;
+ 
+ 	if (!sk)
+@@ -520,8 +518,8 @@
+ 	}
+ 
+ 	po = pppox_sk(sk);
+-	opt = &po->proto.pptp;
+ 	del_chan(po);
++	synchronize_rcu();
+ 
+ 	pppox_unbind_sock(sk);
+ 	sk->sk_state = PPPOX_DEAD;
