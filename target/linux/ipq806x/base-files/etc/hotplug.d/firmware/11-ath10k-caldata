@@ -61,6 +61,9 @@ case "$FIRMWARE" in
 		hw_mac_addr=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		ath10kcal_extract "art" 4096 12064
 		;;
+	ap-dk04.1-c1)
+		ath10kcal_extract "0:ART" 4096 12064
+		;;
 	nbg6817)
 		ath10kcal_extract "0:ART" 4096 12064
 		;;
@@ -83,6 +86,9 @@ case "$FIRMWARE" in
 	ea8500)
 		hw_mac_addr=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		ath10kcal_extract "art" 20480 12064
+		;;
+	ap-dk04.1-c1)
+		ath10kcal_extract "0:ART" 20480 12064
 		;;
 	nbg6817)
 		ath10kcal_extract "0:ART" 20480 12064
