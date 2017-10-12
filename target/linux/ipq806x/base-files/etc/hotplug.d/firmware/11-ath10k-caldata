@@ -27,6 +27,20 @@ ath10kcal_extract() {
 	dd if=$mtd of=/lib/firmware/$FIRMWARE bs=1 skip=$offset count=$count 2>/dev/null || \
 		ath10kcal_die "failed to extract calibration data from $mtd"
 }
+ath10kcal_ubi_extract() {
+	local part=$1
+	local offset=$2
+	local count=$3
+	local ubidev=$(nand_find_ubi $CI_UBIPART)
+	local ubi
+
+	ubi=$(nand_find_volume $ubidev $part)
+	[ -n "$ubi" ] || \
+		ath10kcal_die "no UBI volume found for $part"
+
+	dd if=/dev/$ubi of=/lib/firmware/$FIRMWARE bs=1 skip=$offset count=$count 2>/dev/null || \
+		ath10kcal_die "failed to extract from $ubi"
+}
 
 ath10kcal_patch_mac() {
 	local mac=$1
@@ -70,6 +84,12 @@ case "$FIRMWARE" in
 	vr2600v)
 		ath10kcal_extract "ART" 4096 12064
 		;;
+	rt-ac58u)
+		. /lib/upgrade/nand.sh
+
+		CI_UBIPART=UBI_DEV
+		ath10kcal_ubi_extract "Factory" 4096 12064
+		;;
 	esac
 	;;
 "ath10k/cal-pci-0001:01:00.0.bin")
@@ -95,6 +115,12 @@ case "$FIRMWARE" in
 		;;
 	vr2600v)
 		ath10kcal_extract "ART" 20480 12064
+		;;
+	rt-ac58u)
+		. /lib/upgrade/nand.sh
+
+		CI_UBIPART=UBI_DEV
+		ath10kcal_ubi_extract "Factory" 20480 12064
 		;;
 	esac
 	;;
