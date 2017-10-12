@@ -105,6 +105,7 @@ case "$FIRMWARE" in
 		ath10kcal_extract "EEPROM" 20480 2116
 		;;
 	ap147-010|\
+	ac9531-010|\
 	ap152)
 		ath10kcal_extract "art" 20480 2116
 		ath10kcal_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) -2)

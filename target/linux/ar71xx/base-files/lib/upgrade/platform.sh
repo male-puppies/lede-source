@@ -296,6 +296,7 @@ platform_check_image() {
 	ap136-010|\
 	ap136-020|\
 	ap147-010|\
+	ac9531-010 |\
 	ap152|\
 	ap96|\
 	arduino-yun|\
