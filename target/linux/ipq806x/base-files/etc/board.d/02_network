@@ -39,6 +39,14 @@ ea8500)
 	ucidef_set_interface_macaddr "lan" "$hw_mac_addr"
 	ucidef_set_interface_macaddr "wan" "$hw_mac_addr"
 	;;
+fritz4040)
+	lan_mac_addr=$(ipq40xx_get_dt_mac 0)
+	wan_mac_addr=$(ipq40xx_get_dt_mac 1)
+	ucidef_add_switch "switch0" \
+		"0t@eth0" "1:lan" "2:lan" "3:lan" "4:lan" "5:wan"
+	ucidef_set_interface_macaddr "lan" "$lan_mac_addr"
+	ucidef_set_interface_macaddr "wan" "$wan_mac_addr"
+	;;
 nbg6817)
 	hw_mac_addr=$(mtd_get_mac_ascii 0:APPSBLENV ethaddr)
 	ucidef_add_switch "switch0" \
@@ -49,6 +57,15 @@ nbg6817)
 ap-dk04.1-c1)
 	ucidef_add_switch "switch0" \
 		"0t@eth0" "1:lan" "2:lan" "3:lan" "4:lan" "5:wan"
+	;;
+rt-ac58u)
+	CI_UBIPART=UBI_DEV
+	wan_mac_addr=$(mtd_get_mac_binary_ubi Factory 20486)
+	lan_mac_addr=$(mtd_get_mac_binary_ubi Factory 4102)
+	ucidef_add_switch "switch0" \
+		"0t@eth0" "1:lan" "2:lan" "3:lan" "4:lan" "5:wan"
+	ucidef_set_interface_macaddr "lan" "$lan_mac_addr"
+	ucidef_set_interface_macaddr "wan" "$wan_mac_addr"
 	;;
 *)
 	echo "Unsupported hardware. Network interfaces not intialized"
