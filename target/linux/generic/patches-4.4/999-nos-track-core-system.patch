@@ -1,8 +1,8 @@
 diff --git a/arch/x86/mm/pat.c b/arch/x86/mm/pat.c
-index 89d7907..34d95fd 100644
+index 6ad687d..8e5fa5b 100644
 --- a/arch/x86/mm/pat.c
 +++ b/arch/x86/mm/pat.c
-@@ -756,6 +756,8 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+@@ -746,6 +746,8 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  /* This check is needed to avoid cache aliasing when PAT is enabled */
  static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  {
@@ -11,7 +11,7 @@ index 89d7907..34d95fd 100644
  	u64 from = ((u64)pfn) << PAGE_SHIFT;
  	u64 to = from + size;
  	u64 cursor = from;
-@@ -769,6 +771,7 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
+@@ -762,6 +764,7 @@ static inline int range_is_allowed(unsigned long pfn, unsigned long size)
  		cursor += PAGE_SIZE;
  		pfn++;
  	}
@@ -208,20 +208,20 @@ index 0000000..a4cea06
 +
 +#endif /* _NOS_TRACK_PRIV_H__ */
 diff --git a/include/linux/skbuff.h b/include/linux/skbuff.h
-index 56f4007..abb01b2 100644
+index d443d9a..ec1f04e 100644
 --- a/include/linux/skbuff.h
 +++ b/include/linux/skbuff.h
-@@ -40,6 +40,9 @@
- #include <linux/if_packet.h>
+@@ -39,6 +39,9 @@
+ #include <linux/in6.h>
  #include <net/flow.h>
  
 +/* define skb/ntrack pkt priv size */
 +#include <linux/nos_track.h>
 +
- /* The interface for checksum offload between the stack and networking drivers
-  * is as follows...
+ /* A. Checksumming of received packets by device.
   *
-@@ -807,6 +810,9 @@ struct sk_buff {
+  * CHECKSUM_NONE:
+@@ -708,6 +711,9 @@ struct sk_buff {
  				*data;
  	unsigned int		truesize;
  	atomic_t		users;
@@ -232,19 +232,19 @@ index 56f4007..abb01b2 100644
  
  #ifdef __KERNEL__
 diff --git a/include/net/netfilter/nf_conntrack.h b/include/net/netfilter/nf_conntrack.h
-index d9d52c0..d50a84c 100644
+index fde4068..0780d58 100644
 --- a/include/net/netfilter/nf_conntrack.h
 +++ b/include/net/netfilter/nf_conntrack.h
-@@ -19,6 +19,8 @@
+@@ -18,6 +18,8 @@
+ #include <linux/compiler.h>
  #include <linux/atomic.h>
- #include <linux/rhashtable.h>
  
 +#include <linux/nos_track.h>
 +
  #include <linux/netfilter/nf_conntrack_tcp.h>
  #include <linux/netfilter/nf_conntrack_dccp.h>
  #include <linux/netfilter/nf_conntrack_sctp.h>
-@@ -120,6 +122,9 @@ struct nf_conn {
+@@ -114,6 +116,9 @@ struct nf_conn {
  	/* Extensions */
  	struct nf_ct_ext *ext;
  
@@ -254,7 +254,7 @@ index d9d52c0..d50a84c 100644
  	/* Storage reserved for other modules, must be the last member */
  	union nf_conntrack_proto proto;
  };
-@@ -170,6 +175,18 @@ nf_ct_get(const struct sk_buff *skb, enum ip_conntrack_info *ctinfo)
+@@ -164,6 +169,18 @@ nf_ct_get(const struct sk_buff *skb, enum ip_conntrack_info *ctinfo)
  	return (struct nf_conn *)skb->nfct;
  }
  
@@ -274,10 +274,10 @@ index d9d52c0..d50a84c 100644
  static inline void nf_ct_put(struct nf_conn *ct)
  {
 diff --git a/include/uapi/linux/Kbuild b/include/uapi/linux/Kbuild
-index ccdd8d5..6d9a321 100644
+index ebd10e6..0b8ae96 100644
 --- a/include/uapi/linux/Kbuild
 +++ b/include/uapi/linux/Kbuild
-@@ -476,3 +476,4 @@ header-y += xilinx-v4l2-controls.h
+@@ -461,3 +461,4 @@ header-y += xilinx-v4l2-controls.h
  header-y += zorro.h
  header-y += zorro_ids.h
  header-y += userfaultfd.h
@@ -384,10 +384,10 @@ index 0000000..0854147
 +
 +#endif /* _UAPI_NOS_TRACK_H */
 diff --git a/init/Kconfig b/init/Kconfig
-index 87125b7..72afceb 100644
+index 235c7a2..dbb1514 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -849,6 +849,13 @@ config LOG_BUF_SHIFT
+@@ -830,6 +830,13 @@ config LOG_BUF_SHIFT
  		     13 =>  8 KB
  		     12 =>  4 KB
  
@@ -402,10 +402,10 @@ index 87125b7..72afceb 100644
  	int "CPU kernel log buffer size contribution (13 => 8 KB, 17 => 128KB)"
  	depends on SMP
 diff --git a/init/main.c b/init/main.c
-index 3855fa4..0e04245 100644
+index 9e64d70..914c0bf 100644
 --- a/init/main.c
 +++ b/init/main.c
-@@ -499,6 +499,7 @@ static void __init mm_init(void)
+@@ -494,6 +494,7 @@ static void __init mm_init(void)
  	ioremap_huge_init();
  }
  
@@ -419,15 +419,15 @@ index 3855fa4..0e04245 100644
  	setup_arch(&command_line);
 +	ntrack_mem_reserve();
  	mm_init_cpumask(&init_mm);
- 	mangle_bootargs(command_line);
  	setup_command_line(command_line);
+ 	setup_nr_cpu_ids();
 diff --git a/kernel/Makefile b/kernel/Makefile
-index 5fe0d8c..fddef0b 100644
+index 53abf00..72eb918 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
 @@ -11,6 +11,8 @@ obj-y     = fork.o exec_domain.o panic.o \
  	    notifier.o ksysfs.o cred.o reboot.o \
- 	    async.o range.o smpboot.o ucount.o
+ 	    async.o range.o smpboot.o
  
 +obj-y += nos_track.o
 +
@@ -1053,10 +1053,10 @@ index 0000000..1e45b87
 +}
 +__setup("ntrack_mem", set_ntrack_mem_size);
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 265e0d0..a20adac 100644
+index 999e025..b7c9c26 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -280,6 +280,16 @@ static int min_extfrag_threshold;
+@@ -276,6 +276,16 @@ static int min_extfrag_threshold;
  static int max_extfrag_threshold = 1000;
  #endif
  
@@ -1073,7 +1073,7 @@ index 265e0d0..a20adac 100644
  static struct ctl_table kern_table[] = {
  	{
  		.procname	= "sched_child_runs_first",
-@@ -288,6 +298,90 @@ static struct ctl_table kern_table[] = {
+@@ -284,6 +294,90 @@ static struct ctl_table kern_table[] = {
  		.mode		= 0644,
  		.proc_handler	= proc_dointvec,
  	},
@@ -1165,10 +1165,10 @@ index 265e0d0..a20adac 100644
  	{
  		.procname	= "sched_min_granularity_ns",
 diff --git a/net/core/skbuff.c b/net/core/skbuff.c
-index 7e7b7ce..1dc7212 100644
+index 4968b5d..5cc0f9a 100644
 --- a/net/core/skbuff.c
 +++ b/net/core/skbuff.c
-@@ -869,6 +869,10 @@ static void __copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
+@@ -776,6 +776,10 @@ static void __copy_skb_header(struct sk_buff *new, const struct sk_buff *old)
  	memcpy(&new->headers_start, &old->headers_start,
  	       offsetof(struct sk_buff, headers_end) -
  	       offsetof(struct sk_buff, headers_start));
@@ -1180,10 +1180,10 @@ index 7e7b7ce..1dc7212 100644
  	CHECK_SKB_FIELD(csum);
  	CHECK_SKB_FIELD(hash);
 diff --git a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
-index 9b81c7c..aeab758 100644
+index 86a3c6f..80b4c9a 100644
 --- a/net/netfilter/nf_conntrack_core.c
 +++ b/net/netfilter/nf_conntrack_core.c
-@@ -1094,6 +1094,9 @@ void nf_conntrack_free(struct nf_conn *ct)
+@@ -889,6 +889,9 @@ void nf_conntrack_free(struct nf_conn *ct)
  {
  	struct net *net = nf_ct_net(ct);
  
@@ -1193,9 +1193,9 @@ index 9b81c7c..aeab758 100644
  	/* A freed object has refcnt == 0, that's
  	 * the golden rule for SLAB_DESTROY_BY_RCU
  	 */
-@@ -1828,6 +1831,11 @@ int nf_conntrack_init_start(void)
- 
- 	seqcount_init(&nf_conntrack_generation);
+@@ -1635,6 +1638,11 @@ int nf_conntrack_init_start(void)
+ 	int max_factor = 8;
+ 	int i, ret, cpu;
  
 +	ret = nos_track_init();
 +	if (ret < 0) {
