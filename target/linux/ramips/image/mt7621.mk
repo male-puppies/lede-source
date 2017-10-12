@@ -87,6 +87,13 @@ define Device/newifi-d1
 endef
 TARGET_DEVICES += newifi-d1
 
+define Device/puppies
+  DTS := PUPPIES
+  IMAGE_SIZE := $(ralink_default_fw_size_16M)
+  DEVICE_TITLE := Puppies Device
+endef
+TARGET_DEVICES += puppies
+
 define Device/pbr-m1
   DTS := PBR-M1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
