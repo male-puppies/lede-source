@@ -305,7 +305,7 @@ config BUSYBOX_CONFIG_MSH
 
 choice
 	prompt "Choose which shell is aliased to 'sh' name"
-	#default BUSYBOX_CONFIG_FEATURE_SH_IS_ASH
+	default BUSYBOX_CONFIG_FEATURE_SH_IS_ASH
 	help
 	  Choose which shell you want to be executed by 'sh' alias.
 	  The ash shell is the most bash compatible and full featured one.
