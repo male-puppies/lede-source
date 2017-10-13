@@ -6,8 +6,8 @@ index 209a132..9546d52 100644
  
  # What to install.
  TO_BIN= lua luac
--TO_INC= lua.h luaconf.h lualib.h lauxlib.h ../etc/lua.hpp lnum_config.h
-+TO_INC= lua.h luaconf.h lualib.h lauxlib.h luaconf_internal.h ../etc/lua.hpp lnum_config.h
+-TO_INC= lua.h luaconf.h lualib.h lauxlib.h lnum_config.h ../etc/lua.hpp
++TO_INC= lua.h luaconf.h lualib.h lauxlib.h lnum_config.h luaconf_internal.h ../etc/lua.hpp
  TO_LIB= liblua.a
  TO_MAN= lua.1 luac.1
  
