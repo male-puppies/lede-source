@@ -1,6 +1,6 @@
 diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
---- a/drivers/net/ppp/ppp_generic.c	2017-08-18 07:12:57.869042901 +0000
-+++ b/drivers/net/ppp/ppp_generic.c	2017-08-18 06:38:13.250509975 +0000
+--- a/drivers/net/ppp/ppp_generic.c	2017-09-27 09:00:37.000000000 +0000
++++ b/drivers/net/ppp/ppp_generic.c	2017-10-13 02:09:34.000000000 +0000
 @@ -118,6 +118,7 @@
  	int		n_channels;	/* how many channels are attached 54 */
  	spinlock_t	rlock;		/* lock for receive side 58 */
@@ -172,7 +172,7 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
  	if (pch->chan) {
  		while (!skb_queue_empty(&pch->file.xq)) {
  			skb = skb_dequeue(&pch->file.xq);
-@@ -1660,17 +1685,28 @@
+@@ -1660,15 +1685,26 @@
  		/* channel got deregistered */
  		skb_queue_purge(&pch->file.xq);
  	}
@@ -186,9 +186,9 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
 -			ppp_xmit_process(ppp);
 -		read_unlock_bh(&pch->upl);
 +			__ppp_xmit_process(ppp);
- 	}
- }
- 
++	}
++}
++
 +static void ppp_channel_push(struct channel *pch)
 +{
 +	read_lock_bh(&pch->upl);
@@ -198,23 +198,12 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
 +		(*this_cpu_ptr(pch->ppp->xmit_recursion))--;
 +	} else {
 +		__ppp_channel_push(pch);
-+	}
+ 	}
 +	read_unlock_bh(&pch->upl);
-+}
-+
- /*
-  * Receive-side routines.
-  */
-@@ -2390,8 +2426,6 @@
- 	spin_lock_bh(&pn->all_channels_lock);
- 	list_del(&pch->list);
- 	spin_unlock_bh(&pn->all_channels_lock);
--	put_net(pch->chan_net);
--	pch->chan_net = NULL;
+ }
  
- 	pch->file.dead = 1;
- 	wake_up_interruptible(&pch->file.rwait);
-@@ -2724,11 +2758,12 @@
+ /*
+@@ -2722,11 +2758,12 @@
  	struct net_device *dev = NULL;
  	int ret = -ENOMEM;
  	int i;
@@ -228,7 +217,7 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
  
  	pn = ppp_pernet(net);
  
-@@ -2743,6 +2778,15 @@
+@@ -2741,6 +2778,15 @@
  	INIT_LIST_HEAD(&ppp->channels);
  	spin_lock_init(&ppp->rlock);
  	spin_lock_init(&ppp->wlock);
@@ -244,7 +233,7 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
  #ifdef CONFIG_PPP_MULTILINK
  	ppp->minseq = -1;
  	skb_queue_head_init(&ppp->mrq);
-@@ -2809,8 +2853,10 @@
+@@ -2807,8 +2853,10 @@
  out2:
  	mutex_unlock(&pn->all_ppp_mutex);
  	rtnl_unlock();
@@ -256,7 +245,7 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
  	*retp = ret;
  	return NULL;
  }
-@@ -2868,7 +2914,7 @@
+@@ -2866,7 +2914,7 @@
  #endif /* CONFIG_PPP_FILTER */
  
  	kfree_skb(ppp->xmit_pending);
@@ -265,19 +254,23 @@ diff -uNr a/drivers/net/ppp/ppp_generic.c b/drivers/net/ppp/ppp_generic.c
  	free_netdev(ppp->dev);
  }
  
-@@ -2986,6 +3032,9 @@
+@@ -2982,11 +3030,11 @@
+  */
+ static void ppp_destroy_channel(struct channel *pch)
  {
- 	atomic_dec(&channel_count);
- 
-+	put_net(pch->chan_net);
-+	pch->chan_net = NULL;
++	atomic_dec(&channel_count);
 +
+ 	put_net(pch->chan_net);
+ 	pch->chan_net = NULL;
+ 
+-	atomic_dec(&channel_count);
+-
  	if (!pch->file.dead) {
  		/* "can't happen" */
  		pr_err("ppp: destroying undead channel %p !\n", pch);
 diff -uNr a/drivers/net/ppp/pptp.c b/drivers/net/ppp/pptp.c
---- a/drivers/net/ppp/pptp.c	2017-08-18 07:12:57.869042901 +0000
-+++ b/drivers/net/ppp/pptp.c	2017-08-18 06:38:13.286509238 +0000
+--- a/drivers/net/ppp/pptp.c	2017-09-27 09:00:37.000000000 +0000
++++ b/drivers/net/ppp/pptp.c	2017-10-13 02:09:34.000000000 +0000
 @@ -165,7 +165,6 @@
  	clear_bit(sock->proto.pptp.src_addr.call_id, callid_bitmap);
  	RCU_INIT_POINTER(callid_sock[sock->proto.pptp.src_addr.call_id], NULL);
