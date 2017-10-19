@@ -24,6 +24,7 @@ PKG_CONFIG_DEPENDS += \
 	CONFIG_VERSION_PRODUCT \
 	CONFIG_VERSION_SUPPORT_URL \
 	CONFIG_VERSION_HWREV \
+	CONFIG_VERSION_SHOW \
 
 qstrip_escape=$(subst ','\'',$(call qstrip,$(1)))
 #'
@@ -35,6 +36,9 @@ VERSION_NUMBER:=$(if $(VERSION_NUMBER),$(VERSION_NUMBER),17.01.3)
 
 VERSION_CODE:=$(call qstrip_escape,$(CONFIG_VERSION_CODE))
 VERSION_CODE:=$(if $(VERSION_CODE),$(VERSION_CODE),r3533-d0bf257c46)
+
+VERSION_SHOW:=$(call qstrip_escape,$(CONFIG_VERSION_SHOW))
+VERSION_SHOW:=$(if $(VERSION_SHOW),$(VERSION_SHOW),Bleeding Edge)
 
 VERSION_NICK:=$(call qstrip_escape,$(CONFIG_VERSION_NICK))
 VERSION_NICK:=$(if $(VERSION_NICK),$(VERSION_NICK),$(RELEASE))
@@ -107,6 +111,7 @@ VERSION_SED:=$(SED) 's,%U,$(VERSION_REPO),g' \
 	-e 's,%b,$(VERSION_BUG_URL),g' \
 	-e 's,%s,$(VERSION_SUPPORT_URL),g' \
 	-e 's,%P,$(VERSION_PRODUCT),g' \
-	-e 's,%h,$(VERSION_HWREV),g'
+	-e 's,%h,$(VERSION_HWREV),g' \
+	-e 's,%O,$(VERSION_SHOW),g'
 
 VERSION_SED_SCRIPT:=$(subst '\'','\'\\\\\'\'',$(VERSION_SED))
