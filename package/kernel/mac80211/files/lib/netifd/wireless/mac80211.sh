@@ -416,7 +416,7 @@ mac80211_prepare_vif() {
 
 	json_get_vars ifname mode ssid wds powersave macaddr
 
-	[ -n "$ifname" ] || ifname="wlan${phy#phy}${if_idx:+-$if_idx}"
+	[ -n "$ifname" ] || ifname="ath${phy#phy}${if_idx:+$if_idx}"
 	if_idx=$((${if_idx:-0} + 1))
 
 	set_default wds 0
@@ -596,59 +596,68 @@ mac80211_setup_vif() {
 	case "$mode" in
 		mesh)
 			# authsae or wpa_supplicant
-			json_get_vars key
-			if [ -n "$key" ]; then
-				if [ -e "/lib/wifi/authsae.sh" ]; then
-					. /lib/wifi/authsae.sh
-					authsae_start_interface || failed=1
-				else
-					wireless_vif_parse_encryption
-					mac80211_setup_supplicant || failed=1
-				fi
+			#json_get_vars key
+			#if [ -n "$key" ]; then
+			#	if [ -e "/lib/wifi/authsae.sh" ]; then
+			#		. /lib/wifi/authsae.sh
+			#		authsae_start_interface || failed=1
+			#	else
+			#		wireless_vif_parse_encryption
+			#		mac80211_setup_supplicant || failed=1
+			#	fi
+			#else
+			#	json_get_vars mesh_id mcast_rate
+			#
+			#	mcval=
+			#	[ -n "$mcast_rate" ] && wpa_supplicant_add_rate mcval "$mcast_rate"
+			#
+			#	case "$htmode" in
+			#		VHT20|HT20) mesh_htmode=HT20;;
+			#		HT40*|VHT40)
+			#			case "$hwmode" in
+			#				a)
+			#					case "$(( ($channel / 4) % 2 ))" in
+			#						1) mesh_htmode="HT40+" ;;
+			#						0) mesh_htmode="HT40-";;
+			#					esac
+			#				;;
+			#				*)
+			#					case "$htmode" in
+			#						HT40+) mesh_htmode="HT40+";;
+			#						HT40-) mesh_htmode="HT40-";;
+			#						*)
+			#							if [ "$channel" -lt 7 ]; then
+			#								mesh_htmode="HT40+"
+			#							else
+			#								mesh_htmode="HT40-"
+			#							fi
+			#						;;
+			#					esac
+			#				;;
+			#			esac
+			#		;;
+			#		VHT80)
+			#			mesh_htmode="80Mhz"
+			#		;;
+			#		VHT160)
+			#			mesh_htmode="160Mhz"
+			#		;;
+			#		*) mesh_htmode="NOHT" ;;
+			#	esac
+			#
+			#	freq="$(get_freq "$phy" "$channel")"
+			#	iw dev "$ifname" mesh join "$mesh_id" freq $freq $mesh_htmode \
+			#		${mcval:+mcast-rate $mcval} \
+			#		beacon-interval $beacon_int
+			#fi
+			
+			# always run wpa_supplicant
+			if [ -e "/lib/wifi/authsae.sh" ]; then
+				. /lib/wifi/authsae.sh
+				authsae_start_interface || failed=1
 			else
-				json_get_vars mesh_id mcast_rate
-
-				mcval=
-				[ -n "$mcast_rate" ] && wpa_supplicant_add_rate mcval "$mcast_rate"
-
-				case "$htmode" in
-					VHT20|HT20) mesh_htmode=HT20;;
-					HT40*|VHT40)
-						case "$hwmode" in
-							a)
-								case "$(( ($channel / 4) % 2 ))" in
-									1) mesh_htmode="HT40+" ;;
-									0) mesh_htmode="HT40-";;
-								esac
-							;;
-							*)
-								case "$htmode" in
-									HT40+) mesh_htmode="HT40+";;
-									HT40-) mesh_htmode="HT40-";;
-									*)
-										if [ "$channel" -lt 7 ]; then
-											mesh_htmode="HT40+"
-										else
-											mesh_htmode="HT40-"
-										fi
-									;;
-								esac
-							;;
-						esac
-					;;
-					VHT80)
-						mesh_htmode="80Mhz"
-					;;
-					VHT160)
-						mesh_htmode="160Mhz"
-					;;
-					*) mesh_htmode="NOHT" ;;
-				esac
-
-				freq="$(get_freq "$phy" "$channel")"
-				iw dev "$ifname" mesh join "$mesh_id" freq $freq $mesh_htmode \
-					${mcval:+mcast-rate $mcval} \
-					beacon-interval $beacon_int
+				wireless_vif_parse_encryption
+				mac80211_setup_supplicant || failed=1
 			fi
 
 			for var in $MP_CONFIG_INT $MP_CONFIG_BOOL $MP_CONFIG_STRING; do

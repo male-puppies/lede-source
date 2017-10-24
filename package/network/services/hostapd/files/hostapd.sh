@@ -616,6 +616,13 @@ wpa_supplicant_add_network() {
 			freq="$(get_freq "$phy" "$channel")"
 			append network_data "frequency=$freq" "$N$T"
 		}
+
+		#mesh config
+		cat >> "$_config" <<EOF
+max_peer_links=8
+mesh_max_inactivity=32
+EOF
+
 		append wpa_key_mgmt "SAE"
 		scan_ssid=""
 	}
