@@ -12,12 +12,15 @@ PKG_NAME:=mac80211
 
 PKG_VERSION:=2017-01-31
 PKG_RELEASE:=2
-PKG_SOURCE_URL:=http://mirror2.openwrt.org/sources
+PKG_SOURCE_URL:=$(TOPDIR)/compat-wireless
+PKG_SOURCE_PROTO:=git
 PKG_BACKPORT_VERSION:=
-PKG_HASH:=75e6d39e34cf156212a2509172a4a62b673b69eb4a1d9aaa565f7fa719fa2317
+PKG_REV:=eec4fcbbab21e6cfe3bfba3b272e5f53cbd1b92f
+PKG_SOURCE_VERSION:=$(PKG_REV)
+PKG_SOURCE_SUBDIR:=compat-wireless-$(PKG_VERSION)
 
-PKG_SOURCE:=compat-wireless-$(PKG_VERSION)$(PKG_BACKPORT_VERSION).tar.xz
-PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/compat-wireless-$(PKG_VERSION)
+PKG_SOURCE:=compat-wireless-$(PKG_VERSION)-$(PKG_REV).tar.bz2
+PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_SOURCE_SUBDIR)
 PKG_BUILD_PARALLEL:=1
 
 PKG_MAINTAINER:=Felix Fietkau <nbd@nbd.name>
@@ -235,7 +238,8 @@ define KernelPackage/ath9k
   DEPENDS+= @PCI_SUPPORT||TARGET_ar71xx +kmod-ath9k-common
   FILES:= \
 	$(PKG_BUILD_DIR)/drivers/net/wireless/ath/ath9k/ath9k.ko
-  AUTOLOAD:=$(call AutoProbe,ath9k)
+#  AUTOLOAD:=$(call AutoProbe,ath9k)
+  AUTOLOAD:=$(call AutoLoad,54,ath9k)
 endef
 
 define KernelPackage/ath9k/description
