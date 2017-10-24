@@ -1,0 +1,40 @@
+diff -Nuapr a/src/ap/hw_features.c b/src/ap/hw_features.c
+--- a/src/ap/hw_features.c	2017-10-24 20:57:03.096992556 +0800
++++ b/src/ap/hw_features.c	2017-10-24 20:57:52.836327440 +0800
+@@ -330,6 +330,8 @@ static void ieee80211n_check_scan(struct
+ 	if (!res) {
+ 		iface->conf->secondary_channel = 0;
+ 		res = 1;
++		iface->conf->vht_oper_centr_freq_seg0_idx = 0;
++		iface->conf->vht_oper_centr_freq_seg1_idx = 0;
+ 		wpa_printf(MSG_INFO, "Fallback to 20 MHz");
+ 	}
+ 
+diff -Nuapr a/wpa_supplicant/ap.c b/wpa_supplicant/ap.c
+--- a/wpa_supplicant/ap.c	2017-10-24 20:57:02.932981578 +0800
++++ b/wpa_supplicant/ap.c	2017-10-24 20:58:53.368406322 +0800
+@@ -168,6 +168,7 @@ int wpa_supplicant_conf_ap_ht(struct wpa
+ 
+ 			if (mode->vht_capab && ssid->vht) {
+ 				conf->ieee80211ac = 1;
++				conf->vht_capab |= mode->vht_capab;
+ 				wpas_conf_ap_vht(wpa_s, conf, mode);
+ 			}
+ 		}
+diff -Nuapr a/wpa_supplicant/wpa_supplicant.c b/wpa_supplicant/wpa_supplicant.c
+--- a/wpa_supplicant/wpa_supplicant.c	2017-10-24 20:57:02.944982359 +0800
++++ b/wpa_supplicant/wpa_supplicant.c	2017-10-24 21:01:44.883902981 +0800
+@@ -2098,6 +2098,13 @@ void ibss_mesh_setup_freq(struct wpa_sup
+ 
+ 	vht_freq = *freq;
+ 
++#ifdef CONFIG_VHT_OVERRIDES
++	if (ssid->disable_vht) {
++		freq->vht_enabled = 0;
++		return;
++	}
++#endif /* CONFIG_VHT_OVERRIDES */
++
+ 	vht_freq.vht_enabled = vht_supported(mode);
+ 	if (!vht_freq.vht_enabled)
+ 		return;
