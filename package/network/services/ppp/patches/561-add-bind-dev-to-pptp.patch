@@ -1,0 +1,169 @@
+diff -uNr a/pppd/plugins/pptp/pptp.c b/pppd/plugins/pptp/pptp.c
+--- a/pppd/plugins/pptp/pptp.c	2017-09-30 09:01:08.702902805 +0000
++++ b/pppd/plugins/pptp/pptp.c	2017-10-09 13:18:02.715270637 +0000
+@@ -65,6 +65,7 @@
+ char *pptp_server = NULL;
+ char *pptp_client = NULL;
+ char *pptp_phone = NULL;
++char *binddev = NULL;
+ int pptp_window=50;
+ int pptp_sock=-1;
+ struct in_addr localbind = { INADDR_NONE };
+@@ -89,6 +90,8 @@
+       "PPTP Phone number" },
+     { "pptp_window",o_int, &pptp_window,
+       "PPTP window" },
++    { "binddev", o_string, &binddev,
++      "Set PPTP logical dev for bind"},
+     { NULL }
+ };
+ 
+@@ -106,6 +109,48 @@
+     cleanup: NULL
+ };
+ 
++static int get_ether_ip(char *eth, char *ipaddr)
++{
++    int sock_fd;
++    struct  sockaddr_in my_addr;
++    struct ifreq ifr;
++    
++    /**//* Get socket file descriptor */
++    if ((sock_fd = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
++    {
++        perror("socket");
++        return 0;
++    }
++    
++    /**//* Get IP Address */
++    strncpy(ifr.ifr_name, eth, IF_NAMESIZE);
++    ifr.ifr_name[IFNAMSIZ-1]='\0';
++    
++    if (ioctl(sock_fd, SIOCGIFADDR, &ifr) < 0)
++    {
++        error("No Such Device %s\n",eth);
++        return 0;
++    }
++    
++    memcpy(&my_addr, &ifr.ifr_addr, sizeof(my_addr));
++    strcpy(ipaddr, inet_ntoa(my_addr.sin_addr));
++    close(sock_fd);
++    
++    return 1;
++}
++
++int setsockopt_bindtodevice(int sock, char *eth)
++{
++    struct ifreq ifr;
++
++    strncpy(ifr.ifr_name, eth, IF_NAMESIZE);
++    if (setsockopt(sock, SOL_SOCKET, SO_BINDTODEVICE,(char *)&ifr, sizeof(ifr)) < 0) {
++        return 0;
++     }
++
++     return 1;
++}
++
+ static int pptp_start_server(void)
+ {
+ 	pptp_fd=pptp_sock;
+@@ -120,29 +165,43 @@
+ 	struct hostent *hostinfo;
+ 
+ 	hostinfo=gethostbyname(pptp_server);
+-  if (!hostinfo)
++    if (!hostinfo)
+ 	{
+ 		error("PPTP: Unknown host %s\n", pptp_server);
+ 		return -1;
+ 	}
+ 	dst_addr.sa_addr.pptp.sin_addr=*(struct in_addr*)hostinfo->h_addr;
+ 	{
+-		int sock;
+-		struct sockaddr_in addr;
+-		len=sizeof(addr);
+-		addr.sin_addr=dst_addr.sa_addr.pptp.sin_addr;
+-		addr.sin_family=AF_INET;
+-		addr.sin_port=htons(1700);
+-		sock=socket(AF_INET,SOCK_DGRAM,0);
+-		if (connect(sock,(struct sockaddr*)&addr,sizeof(addr)))
+-		{
+-			close(sock);
+-			error("PPTP: connect failed (%s)\n",strerror(errno));
+-			return -1;
++		char srcip[16];
++
++        if(binddev && get_ether_ip(binddev, srcip))
++        {
++            struct in_addr srcaddr;
++            inet_aton(srcip, &srcaddr);
++            src_addr.sa_addr.pptp.sin_addr = srcaddr;
++        }
++
++        else
++        {
++           int sock;
++           struct sockaddr_in addr;
++		    len=sizeof(addr);
++		    addr.sin_addr=dst_addr.sa_addr.pptp.sin_addr;
++		    addr.sin_family=AF_INET;
++		    addr.sin_port=htons(1700);
++		    sock=socket(AF_INET,SOCK_DGRAM,0);
++        
++		    if (connect(sock,(struct sockaddr*)&addr,sizeof(addr)))
++		    {
++			    close(sock);
++			    error("PPTP: connect failed (%s)\n",strerror(errno));
++			    return -1;
++		    }
++
++		    getsockname(sock,(struct sockaddr*)&addr,&len);
++		    src_addr.sa_addr.pptp.sin_addr=addr.sin_addr;
++		    close(sock);
+ 		}
+-		getsockname(sock,(struct sockaddr*)&addr,&len);
+-		src_addr.sa_addr.pptp.sin_addr=addr.sin_addr;
+-		close(sock);
+ 	}
+ 
+ 	src_addr.sa_family=AF_PPPOX;
+@@ -159,6 +218,12 @@
+ 		error("PPTP: failed to create PPTP socket (%s)\n",strerror(errno));
+ 		return -1;
+ 	}
++
++   if(binddev)
++   {    
++        setsockopt_bindtodevice(pptp_fd, binddev);
++   }
++	
+ 	if (bind(pptp_fd,(struct sockaddr*)&src_addr,sizeof(src_addr)))
+ 	{
+ 		close(pptp_fd);
+diff -uNr a/pppd/plugins/pptp/pptp_callmgr.c b/pppd/plugins/pptp/pptp_callmgr.c
+--- a/pppd/plugins/pptp/pptp_callmgr.c	2017-10-09 11:09:50.390451431 +0000
++++ b/pppd/plugins/pptp/pptp_callmgr.c	2017-10-09 13:17:59.331190452 +0000
+@@ -29,11 +29,13 @@
+ 
+ extern struct in_addr localbind; /* from pptp.c */
+ extern int call_ID;
++extern char *binddev;
+ 
+ int open_inetsock(struct in_addr inetaddr);
+ int open_unixsock(struct in_addr inetaddr);
+ void close_inetsock(int fd, struct in_addr inetaddr);
+ void close_unixsock(int fd, struct in_addr inetaddr);
++extern int setsockopt_bindtodevice(int sock, char *eth);
+ 
+ sigjmp_buf callmgr_env;
+ 
+@@ -314,6 +316,9 @@
+             close(s); return -1;
+         }
+     }
++    if (binddev) {
++        setsockopt_bindtodevice(s, binddev);
++    }
+     if (connect(s, (struct sockaddr *) &dest, sizeof(dest)) < 0) {
+         warn("connect: %s", strerror(errno));
+         close(s); return -1;
