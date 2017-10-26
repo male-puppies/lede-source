@@ -138,7 +138,7 @@ Signed-off-by: Mathy Vanhoef <Mathy.Vanhoef@cs.kuleuven.be>
  
  	sm->pairwise = pairwise;
  	sm->PTK_valid = TRUE;
-+	sm->tk_already_set = FALSE
++	sm->tk_already_set = FALSE;
  	wpa_ft_install_ptk(sm);
  
  	buflen = 2 + sizeof(struct rsn_mdie) + 2 + sizeof(struct rsn_ftie) +
