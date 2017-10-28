@@ -637,6 +637,9 @@ wpa_supplicant_add_network() {
 			append network_data "disable_vht=$disable_vht" "$N$T"
 		} 
 
+		#add beacon_int for mesh
+		append network_data "beacon_int=$beacon_int" "$N$T"
+
 		#mesh config
 		cat >> "$_config" <<EOF
 max_peer_links=8
