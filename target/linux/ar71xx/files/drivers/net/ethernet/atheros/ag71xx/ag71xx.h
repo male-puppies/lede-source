@@ -26,6 +26,7 @@
 #include <linux/ethtool.h>
 #include <linux/etherdevice.h>
 #include <linux/if_vlan.h>
+#include <linux/if_link.h>
 #include <linux/phy.h>
 #include <linux/skbuff.h>
 #include <linux/dma-mapping.h>
@@ -74,6 +75,8 @@ do {									\
 	printk("%s,%d: assertion failed\n", __FILE__, __LINE__);	\
 	BUG();								\
 } while (0)
+
+#define RX_CHECK_TIMER_INTERVAL (HZ/2)
 
 struct ag71xx_desc {
 	u32	data;
@@ -178,9 +181,23 @@ struct ag71xx {
 	struct delayed_work	link_work;
 	struct timer_list	oom_timer;
 
+	struct rtnl_link_stats64 ag71xx_net_stat;
+
 #ifdef CONFIG_AG71XX_DEBUG_FS
 	struct ag71xx_debug	debug;
 #endif
+
+	/* rx check timer */
+	struct timer_list rx_check_timer;
+	/* 当前rx计数 */
+	unsigned long rx_counter; 
+	/* 500ms前的计数 */
+	unsigned long last_rx_counter;
+	/* 500ms前寄存器的rx计数 */
+	unsigned long last_reg_rx_counter;
+	/* rx不变出现的次数 */
+	unsigned long no_rx_cnt;
+	
 };
 
 extern struct ethtool_ops ag71xx_ethtool_ops;
@@ -245,6 +262,7 @@ ag71xx_ring_size_order(int size)
 #define AG71XX_REG_FIFO_RAM5	0x0074
 #define AG71XX_REG_FIFO_RAM6	0x0078
 #define AG71XX_REG_FIFO_RAM7	0x007c
+#define AG71XX_REG_RX_PACKET	0x00a0
 
 #define AG71XX_REG_TX_CTRL	0x0180
 #define AG71XX_REG_TX_DESC	0x0184

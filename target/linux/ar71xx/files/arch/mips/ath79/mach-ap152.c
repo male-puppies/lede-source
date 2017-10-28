@@ -37,6 +37,8 @@
 
 #define AP152_GPIO_LED_USB0		7
 #define AP152_GPIO_LED_USB1		8
+#define AP152_GPIO_LED_SYS		1
+#define AP152_GPIO_LED_2G		19
 
 #define AP152_GPIO_BTN_RESET            2
 #define AP152_GPIO_BTN_WPS              1
@@ -57,17 +59,19 @@ static struct gpio_led ap152_leds_gpio[] __initdata = {
 		.gpio		= AP152_GPIO_LED_USB1,
 		.active_low	= 1,
 	},
+	{
+		.name		= "ap152:green:sys",
+		.gpio		= AP152_GPIO_LED_SYS,
+		.active_low	= 0,
+	},
+	{
+		.name		= "wlan_2g",
+		.gpio		= AP152_GPIO_LED_2G,
+		.active_low	= 1,
+	},
 };
 
 static struct gpio_keys_button ap152_gpio_keys[] __initdata = {
-	{
-		.desc		= "WPS button",
-		.type		= EV_KEY,
-		.code		= KEY_WPS_BUTTON,
-		.debounce_interval = AP152_KEYS_DEBOUNCE_INTERVAL,
-		.gpio		= AP152_GPIO_BTN_WPS,
-		.active_low	= 1,
-	},
 	{
 		.desc		= "Reset button",
 		.type		= EV_KEY,
