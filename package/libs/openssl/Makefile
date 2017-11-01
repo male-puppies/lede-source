@@ -168,6 +168,8 @@ else
   endif
 endif
 
+OPENSSL_OPTIONS+=no-asm
+
 STAMP_CONFIGURED := $(STAMP_CONFIGURED)_$(shell echo $(OPENSSL_OPTIONS) | mkhash md5)
 
 define Build/Configure
