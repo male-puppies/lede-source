@@ -202,6 +202,9 @@ ramips_board_detect() {
 	*"Openwrt Puppies")
 		name="puppies"
 		;;
+	*"Openwrt Nxc200p")
+		name="nxc200p"
+		;;
 	*"Fonera 2.0N")
 		name="fonera20n"
 		;;
