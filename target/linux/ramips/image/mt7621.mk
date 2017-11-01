@@ -94,6 +94,13 @@ define Device/puppies
 endef
 TARGET_DEVICES += puppies
 
+define Device/nxc200p
+   DTS := NXC200P
+   IMAGE_SIZE := $(ralink_default_fw_size_16M)
+   DEVICE_TITLE := NXC200P Device
+endef
+TARGET_DEVICES += nxc200p
+
 define Device/pbr-m1
   DTS := PBR-M1
   IMAGE_SIZE := $(ralink_default_fw_size_16M)
@@ -227,6 +234,12 @@ define Device/zbt-wg3526
   DEVICE_PACKAGES := kmod-usb3 kmod-usb-ledtrig-usbport kmod-ata-core kmod-ata-ahci
 endef
 TARGET_DEVICES += zbt-wg3526
+
+# XXX: build puppies or nxc200p only
+TARGET_DEVICES = puppies
+ifeq ($(CONFIG_TARGET_AC_mt7621_nxc200p),y)
+  TARGET_DEVICES = nxc200p
+endif
 
 # FIXME: is this still needed?
 define Image/Prepare
