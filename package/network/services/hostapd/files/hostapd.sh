@@ -190,6 +190,8 @@ hostapd_common_add_bss_config() {
 	config_add_array basic_rate
 	config_add_array supported_rates
 
+	config_add_int priority
+
 	config_add_int ft_psk_generate_local
 	config_add_int ft_over_ds
 }
@@ -211,7 +213,7 @@ hostapd_set_bss_options() {
 		wps_independent wps_device_type wps_device_name wps_manufacturer wps_pin \
 		macfilter ssid wmm uapsd hidden short_preamble rsn_preauth \
 		iapp_interface eapol_version acct_server acct_secret acct_port \
-		dynamic_vlan ieee80211w
+		dynamic_vlan ieee80211w priority
 
 	set_default isolate 0
 	set_default maxassoc 0
@@ -223,6 +225,7 @@ hostapd_set_bss_options() {
 	set_default uapsd 1
 	set_default eapol_version 0
 	set_default acct_port 1813
+	set_default priority 0
 
 	append bss_conf "ctrl_interface=/var/run/hostapd"
 	if [ "$isolate" -gt 0 ]; then
@@ -240,6 +243,32 @@ hostapd_set_bss_options() {
 	append bss_conf "wmm_enabled=$wmm" "$N"
 	append bss_conf "ignore_broadcast_ssid=$hidden" "$N"
 	append bss_conf "uapsd_advertisement_enabled=$uapsd" "$N"
+	
+	[ "$priority" -gt 0 ] && {
+		if [ ${ifname:3:1} -eq 0 ]; then
+			local finish=0
+			[ -d /sys/class/ieee80211/phy1/device/net ] && {
+				for wdev in $(ls /sys/class/ieee80211/phy1/device/net); do
+					iw $wdev info | grep "ssid $ssid"
+					[ "$?" -eq 0 ] && {
+						finish=1
+						append bss_conf "no_probe_resp_if_seen_on=$wdev" "$N"
+						append bss_conf "no_auth_if_seen_on=$wdev" "$N"
+						break
+					}
+				done
+			}
+
+			[ $finish -ne 1 ] && {
+				append bss_conf "#no_probe_resp_if_seen_on=$ssid" "$N"
+				append bss_conf "#no_auth_if_seen_on=$ssid" "$N"
+			}
+		elif [ ${ifname:3:1} -eq 1 ]; then
+			sed -i "s%#no_probe_resp_if_seen_on=$ssid%no_probe_resp_if_seen_on=$ifname%g" /var/run/hostapd-phy0.conf
+			sed -i "s%#no_auth_if_seen_on=$ssid%no_auth_if_seen_on=$ifname%g" /var/run/hostapd-phy0.conf
+			append bss_conf "track_sta_max_num=100" "$N"
+		fi
+	}
 
 	[ "$wpa" -gt 0 ] && {
 		[ -n "$wpa_group_rekey"  ] && append bss_conf "wpa_group_rekey=$wpa_group_rekey" "$N"

@@ -1,0 +1,187 @@
+diff -uNr a/config.c b/config.c
+--- a/config.c	2017-11-03 23:21:55.836383389 -0700
++++ b/config.c	2017-11-03 23:55:04.300359520 -0700
+@@ -348,6 +348,8 @@
+ 	struct uci_element *e;
+ 	const char *dev_name;
+ 
++	wireless_drivers_count = 0;	
++
+ 	if (!uci_wireless) {
+ 		DPRINTF("No wireless configuration found\n");
+ 		return;
+diff -uNr a/scripts/netifd-wireless.sh b/scripts/netifd-wireless.sh
+--- a/scripts/netifd-wireless.sh	2017-11-03 23:22:47.468382769 -0700
++++ b/scripts/netifd-wireless.sh	2017-11-03 23:53:38.380360551 -0700
+@@ -109,10 +109,19 @@
+ _wdev_notify_init() {
+ 	local command="$1"
+ 	local interface="$2"
++	local device="$3"
+ 
+ 	json_init
+ 	json_add_int "command" "$command"
+-	json_add_string "device" "$__netifd_device"
++	if [ ! -n "$device" ]; then
++		json_add_string "device" "$__netifd_device"
++	else
++		if [ "$__netifd_device" = "wifi0" ]; then
++			json_add_string "device" "radio1"
++		else
++			json_add_string "device" "radio0"
++		fi
++	fi
+ 	[ -n "$interface" ] && json_add_string "interface" "$interface"
+ 	json_add_object "data"
+ }
+@@ -175,7 +184,9 @@
+ }
+ 
+ _wireless_set_retry() {
+-	_wdev_notify_init $CMD_SET_RETRY
++	local device="$2"
++	local interface="$3"
++	_wdev_notify_init $CMD_SET_RETRY "$interface" "$device"
+ 	json_add_int retry "$1"
+ 	_wdev_notify
+ }
+@@ -323,7 +334,7 @@
+ 				json_dump
+ 			}
+ 		;;
+-		setup|teardown)
++		setup|teardown|final)
+ 			interface="$1"; shift
+ 			data="$1"; shift
+ 			export __netifd_device="$interface"
+diff -uNr a/ubus.c b/ubus.c
+--- a/ubus.c	2017-11-03 23:22:28.084383002 -0700
++++ b/ubus.c	2017-11-03 23:54:41.180359797 -0700
+@@ -1041,6 +1041,7 @@
+ 	if (wdev) {
+ 		wireless_device_set_up(wdev);
+ 	} else {
++		wireless_drivers_enable_count();
+ 		vlist_for_each_element(&wireless_devices, wdev, node)
+ 			wireless_device_set_up(wdev);
+ 	}
+diff -uNr a/wireless.c b/wireless.c
+--- a/wireless.c	2017-11-03 23:21:26.824383737 -0700
++++ b/wireless.c	2017-11-03 23:54:48.092359715 -0700
+@@ -23,6 +23,8 @@
+ struct avl_tree wireless_drivers;
+ static struct blob_buf b;
+ static int drv_fd;
++int wireless_drivers_count = 0;
++
+ 
+ static const struct blobmsg_policy wdev_policy =
+ 	{ .name = "disabled", .type = BLOBMSG_TYPE_BOOL };
+@@ -288,7 +290,10 @@
+ 		return;
+ 
+ 	if (wdev->retry_setup_failed)
++	{
++		wireless_drivers_count = 0;
+ 		return;
++	}
+ 
+ 	if (!wdev->autostart)
+ 		return;
+@@ -345,6 +350,9 @@
+ 	wdev->cancel = false;
+ 	wdev->state = IFS_DOWN;
+ 	wireless_device_free_state(wdev);
++
++	if (wdev->config_state != IFC_REMOVE) 
++		wireless_drivers_count++;
+ 	wdev_handle_config_change(wdev);
+ }
+ 
+@@ -381,6 +389,19 @@
+ 	wireless_device_run_handler(wdev, false);
+ }
+ 
++void
++wireless_device_after_setup(struct wireless_device *wdev)
++{
++	const char *argv[5];
++	int i = 0;
++
++	argv[i++] = wdev->drv->script;
++	argv[i++] = wdev->drv->name;
++	argv[i++] = "final";
++	argv[i++] = wdev->name;
++	argv[i] = NULL;
++	netifd_start_process(argv, NULL, &wdev->script_task);
++}
+ static void
+ wireless_device_mark_up(struct wireless_device *wdev)
+ {
+@@ -396,6 +417,11 @@
+ 	wdev->state = IFS_UP;
+ 	vlist_for_each_element(&wdev->interfaces, vif, node)
+ 		wireless_interface_handle_link(vif, true);
++
++	/* 当全部setup成功后，执行最后的脚本启动hostapd进程 */
++	wireless_drivers_count--;
++	if (0 == wireless_drivers_count)
++		wireless_device_after_setup(wdev);
+ }
+ 
+ static void
+@@ -999,7 +1025,28 @@
+ wireless_start_pending(void)
+ {
+ 	struct wireless_device *wdev;
++	
++	/* 若已计算过，则不重新计算 */
++	if (wireless_drivers_count == 0)
++		wireless_drivers_enable_count();
+ 
+ 	vlist_for_each_element(&wireless_devices, wdev, node)
+ 		__wireless_device_set_up(wdev);
+ }
++
++/*
++ *	计算需要setup的driver的个数
++ *	当状态为IFS_DOWN时才可setup
++ */
++void
++wireless_drivers_enable_count(void)
++{
++	struct wireless_device *wdev;
++	
++	wireless_drivers_count = 0;
++
++	vlist_for_each_element(&wireless_devices, wdev, node)
++		if (wdev->state == IFS_DOWN)
++				wireless_drivers_count++;
++}
++
+diff -uNr a/wireless.h b/wireless.h
+--- a/wireless.h	2017-11-03 23:21:33.676383655 -0700
++++ b/wireless.h	2017-11-03 23:54:56.836359610 -0700
+@@ -19,6 +19,7 @@
+ 
+ extern struct vlist_tree wireless_devices;
+ extern struct avl_tree wireless_drivers;
++extern int wireless_drivers_count;
+ 
+ struct wireless_driver {
+ 	struct avl_node node;
+@@ -92,6 +93,7 @@
+ 
+ void wireless_device_create(struct wireless_driver *drv, const char *name, struct blob_attr *data);
+ void wireless_device_set_up(struct wireless_device *wdev);
++void wireless_device_after_setup(struct wireless_device *wdev);
+ void wireless_device_set_down(struct wireless_device *wdev);
+ void wireless_device_status(struct wireless_device *wdev, struct blob_buf *b);
+ void wireless_device_get_validate(struct wireless_device *wdev, struct blob_buf *b);
+@@ -102,4 +104,6 @@
+ void wireless_start_pending(void);
+ void wireless_init(void);
+ 
++void wireless_drivers_enable_count(void);
++
+ #endif

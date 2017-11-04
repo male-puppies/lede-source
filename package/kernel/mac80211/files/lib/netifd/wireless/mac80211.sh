@@ -692,6 +692,13 @@ get_freq() {
 mac80211_interface_cleanup() {
 	local phy="$1"
 
+	[ -n "$phy" ] && {
+		local hostapd_conf_filename="\/var\/run\/hostapd-$phy.conf"
+		sed -i "s/"$hostapd_conf_filename"//g" /tmp/hostapd_conf_filename
+		sed -i 's/^ //g' /tmp/hostapd_conf_filename
+		sed -i 's/ $//g' /tmp/hostapd_conf_filename
+	}
+
 	for wdev in $(list_phy_interfaces "$phy"); do
 		ip link set dev "$wdev" down 2>/dev/null
 		iw dev "$wdev" del
@@ -700,6 +707,39 @@ mac80211_interface_cleanup() {
 
 drv_mac80211_cleanup() {
 	hostapd_common_cleanup
+}
+
+drv_mac80211_final() {
+	local phy
+
+	if [ "$1" = "wifi0" ]; then
+		phy="phy0"
+	elif [ "$1" = "wifi1" ]; then
+		phy="phy1"
+	fi
+
+	pid=$(ps -aux|grep /usr/sbin/hostapd|grep -v grep|awk -F ' ' '{print $2}')
+	[ -n "$pid" ] && {
+		killall hostapd
+		wireless_set_retry 4 1
+		return
+	}
+
+	hostapd_conf_filename=$(cat /tmp/hostapd_conf_filename)
+
+	[ -n "$hostapd_conf_filename" ] && {
+		for filename in $hostapd_conf_filename; do
+			[ ! -f $filename ] && return
+		done
+		/usr/sbin/hostapd -P /var/run/wifi-$phy.pid -B $hostapd_conf_filename
+		ret="$?"
+		wireless_add_process "$(cat /var/run/wifi-$phy.pid)" "/usr/sbin/hostapd" 1
+		[ "$ret" != 0 ] && {
+			wireless_setup_failed HOSTAPD_START_FAILED
+			return
+		}
+	}
+	
 }
 
 drv_mac80211_setup() {
@@ -767,13 +807,8 @@ drv_mac80211_setup() {
 	for_each_interface "ap" mac80211_prepare_vif
 
 	[ -n "$hostapd_ctrl" ] && {
-		/usr/sbin/hostapd -s -P /var/run/wifi-$phy.pid -B "$hostapd_conf_file"
-		ret="$?"
-		wireless_add_process "$(cat /var/run/wifi-$phy.pid)" "/usr/sbin/hostapd" 1
-		[ "$ret" != 0 ] && {
-			wireless_setup_failed HOSTAPD_START_FAILED
-			return
-		}
+		grep "$hostapd_conf_file" /tmp/hostapd_conf_filename
+		[ "$?" -eq 0 ] || echo -e " $hostapd_conf_file\c\h" >> /tmp/hostapd_conf_filename
 	}
 
 	for_each_interface "ap sta adhoc mesh monitor" mac80211_setup_vif
