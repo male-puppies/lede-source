@@ -189,6 +189,9 @@ hostapd_common_add_bss_config() {
 	config_add_int mcast_rate
 	config_add_array basic_rate
 	config_add_array supported_rates
+
+	config_add_int ft_psk_generate_local
+	config_add_int ft_over_ds
 }
 
 hostapd_set_bss_options() {
@@ -375,7 +378,7 @@ hostapd_set_bss_options() {
 
 		if [ "$ieee80211r" -gt "0" ]; then
 			json_get_vars mobility_domain r0_key_lifetime r1_key_holder \
-			reassociation_deadline pmk_r1_push
+			reassociation_deadline pmk_r1_push ft_psk_generate_local ft_over_ds
 			json_get_values r0kh r0kh
 			json_get_values r1kh r1kh
 
@@ -390,6 +393,8 @@ hostapd_set_bss_options() {
 			append bss_conf "r1_key_holder=$r1_key_holder" "$N"
 			append bss_conf "reassociation_deadline=$reassociation_deadline" "$N"
 			append bss_conf "pmk_r1_push=$pmk_r1_push" "$N"
+			[ -n "$ft_psk_generate_local" ] && append bss_conf "ft_psk_generate_local=$ft_psk_generate_local" "$N"
+			[ -n "$ft_over_ds" ] && append bss_conf "ft_over_ds=$ft_over_ds" "$N"
 
 			for kh in $r0kh; do
 				append bss_conf "r0kh=${kh//,/ }" "$N"
