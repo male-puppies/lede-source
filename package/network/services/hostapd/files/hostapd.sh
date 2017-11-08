@@ -246,27 +246,10 @@ hostapd_set_bss_options() {
 	
 	[ "$priority" -gt 0 ] && {
 		if [ ${ifname:3:1} -eq 0 ]; then
-			local finish=0
-			[ -d /sys/class/ieee80211/phy1/device/net ] && {
-				for wdev in $(ls /sys/class/ieee80211/phy1/device/net); do
-					iw $wdev info | grep "ssid $ssid"
-					[ "$?" -eq 0 ] && {
-						finish=1
-						append bss_conf "no_probe_resp_if_seen_on=$wdev" "$N"
-						append bss_conf "no_auth_if_seen_on=$wdev" "$N"
-						break
-					}
-				done
-			}
-
-			[ $finish -ne 1 ] && {
-				append bss_conf "#no_probe_resp_if_seen_on=$ssid" "$N"
-				append bss_conf "#no_auth_if_seen_on=$ssid" "$N"
-			}
+			append bss_conf "#tmp=$ssid" "$N"
+			append bss_conf "#tmp1=$ssid" "$N"
 		elif [ ${ifname:3:1} -eq 1 ]; then
-			sed -i "s%#no_probe_resp_if_seen_on=$ssid%no_probe_resp_if_seen_on=$ifname%g" /var/run/hostapd-phy0.conf
-			sed -i "s%#no_auth_if_seen_on=$ssid%no_auth_if_seen_on=$ifname%g" /var/run/hostapd-phy0.conf
-			append bss_conf "track_sta_max_num=100" "$N"
+			append bss_conf "#$ssid=$ifname" "$N"
 		fi
 	}
 

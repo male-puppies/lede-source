@@ -712,9 +712,9 @@ drv_mac80211_cleanup() {
 drv_mac80211_final() {
 	local phy
 
-	if [ "$1" = "wifi0" ]; then
+	if [ "$1" = "radio0" ]; then
 		phy="phy0"
-	elif [ "$1" = "wifi1" ]; then
+	elif [ "$1" = "radio1" ]; then
 		phy="phy1"
 	fi
 
@@ -723,6 +723,18 @@ drv_mac80211_final() {
 		killall hostapd
 		wireless_set_retry 4 1
 		return
+	}
+
+	interface0=`grep "^#tmp=.*" /var/run/hostapd-phy0.conf | cut -d '=' -f 2`
+	[ -n "$interface0" ] && {
+		for ssid in $interface0; do
+			local ath=`grep "^#$ssid=ath.*$" /var/run/hostapd-phy1.conf | cut -d '=' -f 2`
+			[ -n "$ath" ] && {
+				sed -i "s%^#tmp="$ssid"$%no_probe_resp_if_seen_on="$ath"%g" /var/run/hostapd-phy0.conf
+				sed -i "s%^#tmp1="$ssid"$%no_auth_if_seen_on="$ath"%g" /var/run/hostapd-phy0.conf
+				sed -i "s%^#"$ssid"="$ath"$%track_sta_max_num=100%g" /var/run/hostapd-phy1.conf
+			}
+		done
 	}
 
 	hostapd_conf_filename=$(cat /tmp/hostapd_conf_filename)
