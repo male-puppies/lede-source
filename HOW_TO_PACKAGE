@@ -1,0 +1,21 @@
+1. 建立目录树：
+  |package_dir
+  |         |
+            |--mp          mp的lede主trunk
+            |
+            |--mpp         mpp的lede主trunk
+            |
+            |--package.sh  打包脚本（从lede主trunk目录【即当前目录】下的package.sh拷贝而来）
+            |
+
+2. 打包：
+    <1>. 将lede主trunk目录下的package.sh脚本拷贝到package_dir目录下
+    <2>. 将lede主trunk目录的名称改为mp/mpp
+    <3>. 在package_dir目录下执行: ./package.sh mp 来打mp的包， 或使用./package.sh mpp来打mpp的包
+
+###########################################################################################
+打包涉及的脚本和目录：
+    1. 获取feeds.conf文件：
+        feeds_conf.sh 来从feeds_config下获取相应的feeds.conf配置文件
+    2. 其他的打包相关的脚本配置等从puppies(MPP上)/ap_apps_low(MP上) 的rom目录下获得
+
