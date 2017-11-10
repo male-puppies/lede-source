@@ -237,8 +237,8 @@ TARGET_DEVICES += zbt-wg3526
 
 # XXX: build puppies or nxc200p only
 TARGET_DEVICES = puppies
-ifeq ($(CONFIG_TARGET_AC_mt7621_nxc200p),y)
-  TARGET_DEVICES = nxc200p
+ifeq ($(CONFIG_TARGET_ramips_mt7621_nxc200p),y)
+TARGET_DEVICES = nxc200p
 endif
 
 # FIXME: is this still needed?
