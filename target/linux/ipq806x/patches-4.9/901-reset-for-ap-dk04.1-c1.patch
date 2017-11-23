@@ -1,0 +1,20 @@
+diff -uNr a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts
+--- a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts	2017-11-22 11:42:18.752133269 +0000
++++ b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts	2017-11-22 11:54:05.000000000 +0000
+@@ -272,6 +272,16 @@
+ 			status = "disabled";
+ 		};
+ 	};
++	gpio_keys {
++			compatible = "gpio-keys";
++
++			button@1 {
++				label = "reset";
++				linux,code = <KEY_RESTART>;
++				gpios = <&tlmm 18 GPIO_ACTIVE_LOW>;
++				linux,input-type = <1>;
++			};
++	};
+ };
+ 
+ &spi_0 { /* BLSP1 QUP1 */
