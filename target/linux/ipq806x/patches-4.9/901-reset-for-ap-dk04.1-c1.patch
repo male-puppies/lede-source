@@ -15,8 +15,8 @@ diff -uNr a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts b/arch/arm/boot/dts/
 +				linux,input-type = <1>;
 +			};
 +	};
-+	gpio-leds {
-+		compatible = "gpio-leds";
++	leds-gpio {
++		compatible = "leds-gpio";
 +
 +		wlan5G {
 +			label = "wlan5G";
