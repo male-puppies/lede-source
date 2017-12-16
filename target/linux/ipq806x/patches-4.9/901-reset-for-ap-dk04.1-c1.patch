@@ -1,7 +1,7 @@
 diff -uNr a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts
 --- a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts	2017-11-22 11:42:18.752133269 +0000
-+++ b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts	2017-11-23 03:39:39.375219421 +0000
-@@ -272,6 +272,29 @@
++++ b/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts	2017-12-16 08:50:45.327502468 +0000
+@@ -272,6 +272,33 @@
  			status = "disabled";
  		};
  	};
@@ -18,15 +18,19 @@ diff -uNr a/arch/arm/boot/dts/qcom-ipq4019-ap.dk04.1-c1.dts b/arch/arm/boot/dts/
 +	leds-gpio {
 +		compatible = "leds-gpio";
 +
-+		wlan5G {
-+			label = "wlan5G";
-+			gpios = <&tlmm 48 0>;
++		status_blue {
++			label = "status_blue";
++			gpios = <&tlmm 46 0>;
 +		};
 +
-+		wlan2G {
-+			label = "wlan2G";
-+			gpios = <&tlmm 49 0>;
++		status_red {
++			label = "status_red";
++			gpios = <&tlmm 45 0>;
 +		};
++		status_green {
++                        label = "status_green";
++                        gpios = <&tlmm 44 0>;
++                };
 +	};
  };
  
