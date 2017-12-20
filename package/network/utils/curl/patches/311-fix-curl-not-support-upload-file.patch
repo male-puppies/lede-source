@@ -1,0 +1,36 @@
+diff -uprN a/lib/vtls/vtls.c b/lib/vtls/vtls.c
+--- a/lib/vtls/vtls.c	2017-12-08 11:43:58.039775515 +0800
++++ b/lib/vtls/vtls.c	2017-12-08 11:51:01.921665212 +0800
+@@ -702,16 +702,11 @@ CURLcode Curl_ssl_push_certinfo(struct C
+   return Curl_ssl_push_certinfo_len(data, certnum, label, value, valuelen);
+ }
+ 
+-CURLcode Curl_ssl_random(struct Curl_easy *data,
+-                         unsigned char *entropy,
+-                         size_t length)
++int Curl_ssl_random(struct Curl_easy *data,
++                     unsigned char *entropy,
++                     size_t length)
+ {
+-  int rc = curlssl_random(data, entropy, length);
+-  if(rc) {
+-    failf(data, "PRNG seeding failed");
+-    return CURLE_FAILED_INIT; /* possibly weird return code */
+-  }
+-  return CURLE_OK;
++  return curlssl_random(data, entropy, length);
+ }
+ 
+ /*
+diff -uprN a/lib/vtls/vtls.h b/lib/vtls/vtls.h
+--- a/lib/vtls/vtls.h	2017-12-08 11:43:26.895345762 +0800
++++ b/lib/vtls/vtls.h	2017-12-08 11:51:11.441798370 +0800
+@@ -154,7 +154,7 @@ void Curl_ssl_kill_session(struct curl_s
+ void Curl_ssl_delsessionid(struct connectdata *conn, void *ssl_sessionid);
+ 
+ /* get N random bytes into the buffer */
+-CURLcode Curl_ssl_random(struct Curl_easy *data, unsigned char *buffer,
++int Curl_ssl_random(struct Curl_easy *data, unsigned char *buffer,
+                          size_t length);
+ CURLcode Curl_ssl_md5sum(unsigned char *tmp, /* input */
+                          size_t tmplen,
