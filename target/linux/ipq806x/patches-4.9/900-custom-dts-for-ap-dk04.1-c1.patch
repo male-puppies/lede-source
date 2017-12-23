@@ -52,13 +52,13 @@ index 47202d2..1c2984f 100644
 +			mdio_pins: mdio_pinmux {
 +				mux_1 {
 +					pins = "gpio6";
-+					function = "mdio0";
-+					bias-bus-hold;
++					function = "mdio";
++					bias-bus-up;
 +				};
 +				mux_2 {
 +					pins = "gpio7";
 +					function = "mdc";
-+					bias-bus-hold;
++					bias-bus-up;
 +				};
 +			};
 +		};
