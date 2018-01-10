@@ -8,5 +8,5 @@ src-git routing https://github.com/male-puppies/lede-routing.git;v3.4-camel_lede
 src-git telephony https://github.com/male-puppies/lede-telephony.git;v3.4-camel_lede
 src-git puppies https://gitlab.com/MicroCloud/openwrt-ac-puppies.git;v3.4-camel-for-nextcloud
 src-git ptpt52 https://github.com/ptpt52/com.ptpt52.openwrt.git
-src-git mariadb https://github.com/jayinqilun/lede-mariadb.git;develop
+src-git mariadb https://gitlab.com/MicroCloud/lede-mariadb.git;develop
 src-git microcloud https://gitlab.com/MicroCloud/server.git;release-v2.0-microcloud
