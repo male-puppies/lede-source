@@ -6,7 +6,7 @@ src-git luci https://github.com/male-puppies/lede-luci.git;v4.0-camel
 src-git routing https://github.com/male-puppies/lede-routing.git;v4.0-camel
 #src-git telephony https://git.lede-project.org/feed/telephony.git^ac6415e61f147a6892fd2785337aec93ddc68fa9
 src-git telephony https://github.com/male-puppies/lede-telephony.git;v4.0-camel
-src-git puppies https://gitlab.com/male-puppies/openwrt-ac-puppies.git;v4.0-camel-microcloud
+src-git puppies https://gitlab.com/MicroCloud/openwrt-ac-puppies.git;v4.0-camel-microcloud
 src-git ptpt52 https://github.com/ptpt52/com.ptpt52.openwrt.git
 src-git mariadb https://gitlab.com/MicroCloud/lede-mariadb.git;develop
 src-git microcloud https://gitlab.com/MicroCloud/server.git;release-v2.0-microcloud
