@@ -1,0 +1,15 @@
+--- a/include/linux/skbuff.h	2018-01-15 17:48:24.329283255 +0800
++++ b/include/linux/skbuff.h	2018-01-15 17:49:54.210247581 +0800
+@@ -1651,8 +1651,10 @@ static inline void __skb_unlink(struct s
+ 	next	   = skb->next;
+ 	prev	   = skb->prev;
+ 	skb->next  = skb->prev = NULL;
+-	next->prev = prev;
+-	prev->next = next;
++	if(next)
++		next->prev = prev;
++	if(prev)
++		prev->next = next;
+ }
+ 
+ /**
