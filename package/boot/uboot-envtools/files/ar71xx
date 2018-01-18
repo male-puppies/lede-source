@@ -46,7 +46,8 @@ om5p-an|\
 sr3200|\
 tube2h|\
 wndr3700|\
-xd3200)
+xd3200|\
+ap152)
 	ubootenv_add_uci_config "/dev/mtd1" "0x0" "0x10000" "0x10000"
 	;;
 alfa-ap96|\
