@@ -36,6 +36,38 @@ ath10kcal_patch_mac() {
 	macaddr_2bin $mac | dd of=/lib/firmware/$FIRMWARE conv=notrunc bs=1 seek=6 count=6
 }
 
+####
+#Function: modify board-2.bin for 9563-9886
+#Author  : yuanwei 2018-02-01
+#Mark    : if you wanted to change this function, you need to know why you do this. see macmanage
+####
+ath10kcal_patch_boarddata() {
+	local mac=$1
+	local lendian_data i=0 num=0
+
+	[ -z "$mac" ] && return
+
+	#modify macaddr in board-2.bin.
+	macaddr_2bin "$mac" | dd of=/lib/firmware/ath10k/QCA9888/hw2.0/board-2.bin conv=notrunc bs=1 seek=126 count=6
+
+	#modify checksum in board-2.bin.
+	lendian_data=`dd if=/lib/firmware/ath10k/QCA9888/hw2.0/board-2.bin bs=1 skip=120 count=12064 2>/dev/null | hexdump -v -n 12064 -e '1/2 "%04x "'`
+
+	# two bytes as a item.
+	for short_int in $lendian_data; do
+		[ $i -ne 1 ] && {
+			num=$((0x$short_int ^ num))
+		}
+		i=$(($i+1))
+	done
+
+	num=$((num ^ 0xFFFF))    # decimal
+	num=`printf "%04x" $num` # hexadecimal
+
+	echo -ne "\x${num:2:2}\x${num:0:2}" | dd of=/lib/firmware/ath10k/QCA9888/hw2.0/board-2.bin conv=notrunc bs=1 seek=122 count=2
+	[ $? -eq 0 ] && echo "Checknum set succeed." || echo "Checknum set faild!"
+}
+
 [ -e /lib/firmware/$FIRMWARE ] && exit 0
 
 . /lib/ar71xx.sh
@@ -44,7 +76,22 @@ ath10kcal_patch_mac() {
 
 board=$(ar71xx_board_name)
 
+# modified by yuanwei 2018-02-01. 9563-9886 uses 'ath10k/pre-cal-pci-0000:00:00.0.bin'
+case $board in
+	ap152)
+		FIRMWARE="ath10k/pre-cal-pci-0000:00:00.0.bin"
+	;;
+esac
+
 case "$FIRMWARE" in
+"ath10k/pre-cal-pci-0000:00:00.0.bin")
+	case $board in
+		ap152)
+		ath10kcal_extract "art" 20480 12064
+		ath10kcal_patch_boarddata $(macaddr_add $(cat /sys/class/net/eth0/address) +3) #if you modified here, you need to modify macmanage
+		;;
+	esac
+	;;
 "ath10k/cal-pci-0000:00:00.0.bin")
 	case $board in
 	cf-e380ac-v1|\
@@ -88,11 +135,7 @@ case "$FIRMWARE" in
 		ath10kcal_extract "caldata" 20480 2116
 		ath10kcal_patch_mac $(macaddr_add $(cat /sys/class/net/eth1/address) +2)
 		;;
-	re450 |\
-	ap152)
-		ath10kcal_extract "art" 20480 2116
-		ath10kcal_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) -2)
-		;;
+	re450 | \
 	tl-wdr6500-v2)
 		ath10kcal_extract "art" 20480 2116
 		ath10kcal_patch_mac $(macaddr_add $(cat /sys/class/net/eth1/address) -2)
