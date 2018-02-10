@@ -392,7 +392,7 @@ youku-yk1)
 	set_usb_led "$board:blue:usb"
 	;;
 nxc200p)
-	ucidef_set_led_timer "sys" "sys" "$board:green:sys" "500" "500"
+	ucidef_set_led_default "sys" "sys" "$board:green:sys" "1"
 	;;
 esac
 
