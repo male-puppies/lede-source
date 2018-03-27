@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2017 OpenWrt.org
+# Copyright (C) 2006-2014 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,14 +9,14 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=lua
 PKG_VERSION:=5.1.5
-PKG_RELEASE:=2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.lua.org/ftp/ \
 	http://ftp.gwdg.de/pub/languages/lua/ \
 	http://mirrors.dotsrc.org/lua/ \
 	http://www.tecgraf.puc-rio.br/lua/ftp/
-PKG_HASH:=2640fc56a795f29d28ef15e13c34a47e223960b0240e8cb0a82d9b0738695333
+PKG_MD5SUM:=2e115fe26e435e33b0d5c022e4490567
 PKG_BUILD_PARALLEL:=1
 
 PKG_LICENSE:=MIT
@@ -33,7 +33,7 @@ define Package/lua/Default
   CATEGORY:=Languages
   TITLE:=Lua programming language
   URL:=http://www.lua.org/
-  MAINTAINER:=Jo-Philipp Wich <jo@mein.io>
+  MAINTAINER:=Jo-Philipp Wich <jow@openwrt.org>
 endef
 
 define Package/lua/Default/description
@@ -111,7 +111,7 @@ define Build/Compile
 endef
 
 define Host/Configure
-	$(SED) 's,"/usr/local/","$(STAGING_DIR_HOSTPKG)/",' $(HOST_BUILD_DIR)/src/luaconf.h
+	$(SED) 's,"/usr/local/","$(STAGING_DIR)/host/",' $(HOST_BUILD_DIR)/src/luaconf.h
 endef
 
 ifeq ($(HOST_OS),Darwin)
@@ -132,7 +132,7 @@ endef
 
 define Host/Install
 	$(MAKE) -C $(HOST_BUILD_DIR) \
-		INSTALL_TOP="$(STAGING_DIR_HOSTPKG)" \
+		INSTALL_TOP="$(STAGING_DIR)/host" \
 		install
 endef
 
@@ -140,7 +140,7 @@ define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/include
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/lua{,lib,conf}.h $(1)/usr/include/
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/lauxlib.h $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/include/luaconf_internal.h $(1)/usr/include/
+	$(CP) $(PKG_INSTALL_DIR)/usr/include/lnum_config.h $(1)/usr/include/
 	$(INSTALL_DIR) $(1)/usr/lib
 	$(CP) $(PKG_INSTALL_DIR)/usr/lib/liblua.{a,so*} $(1)/usr/lib/
 	$(LN) liblua.so.$(PKG_VERSION) $(1)/usr/lib/liblualib.so
