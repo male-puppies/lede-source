@@ -391,6 +391,9 @@ youku-yk1)
 	set_wifi_led "$board:blue:air"
 	set_usb_led "$board:blue:usb"
 	;;
+nxc200p)
+        ucidef_set_led_default "sys" "sys" "$board:green:sys" "1"
+        ;;
 esac
 
 board_config_flush
