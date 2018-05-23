@@ -86,6 +86,7 @@ define Package/opkg/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DATA) ./files/customfeeds.conf $(1)/etc/opkg/customfeeds.conf
 	$(INSTALL_DATA) ./files/opkg$(2).conf $(1)/etc/opkg.conf
+	$(INSTALL_DATA) ./files/mcloud_opkg.conf $(1)/etc/mcloud_opkg.conf
 	$(call FeedSourcesAppend,$(1)/etc/opkg/distfeeds.conf)
 	$(VERSION_SED) $(1)/etc/opkg/distfeeds.conf
 	$(INSTALL_BIN) ./files/20_migrate-feeds $(1)/etc/uci-defaults/
