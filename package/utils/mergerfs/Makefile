@@ -35,7 +35,7 @@ define Package/mergerfs-utils
 $(call Package/mergerfs/Default)
   SECTION:=utils
   CATEGORY:=Utilities
-  DEPENDS:=+libfuse
+  DEPENDS:=+libfuse libstdcpp
   TITLE+= (utilities)
   SUBMENU:=Filesystem
 endef
