@@ -1,0 +1,21 @@
+diff -uNr a/Makefile b/Makefile
+--- a/Makefile	2018-05-22 20:28:56.353333362 +0800
++++ b/Makefile	2018-05-22 20:59:48.215358676 +0800
+@@ -51,7 +51,7 @@
+ TARGET      = mergerfs
+ MANPAGE     = $(TARGET).1
+ FUSE_CFLAGS = -D_FILE_OFFSET_BITS=64 -Ilibfuse/include
+-CFLAGS      = -g -Wall \
++CFLAGS      += -Wall \
+ 	      $(OPTS) \
+ 	      -Wno-unused-result \
+               $(FUSE_CFLAGS) \
+@@ -215,7 +215,7 @@
+ 	cd libfuse && \
+ 	$(MKDIR) -p m4 && \
+ 	autoreconf --force --install && \
+-        ./configure --enable-lib --disable-util --disable-example
++        ./configure --enable-lib --disable-util --disable-example $(CONFIGURE_ARGS)
+ endif
+ 
+ libfuse/lib/.libs/libfuse.a: libfuse_Makefile
