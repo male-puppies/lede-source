@@ -53,6 +53,7 @@ endef
 define Package/mergerfs-utils/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/mergerfs $(1)/sbin
+	$(LN) mergerfs $(1)/sbin/mount.mergerfs
 endef
 
 $(eval $(call BuildPackage,mergerfs-utils))
