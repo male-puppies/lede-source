@@ -36,7 +36,7 @@ $(call Package/zfs/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= (utilities)
-  DEPENDS:=libtirpc
+  DEPENDS:=+libtirpc
   SUBMENU:=Filesystem
 endef
 
