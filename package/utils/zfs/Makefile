@@ -36,16 +36,17 @@ $(call Package/zfs/Default)
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE+= (utilities)
+  DEPENDS:=libtirpc
   SUBMENU:=Filesystem
 endef
 
 define Package/zfs/description
-$(call Package/mergerfs/Default/description)
+	$(call Package/zfs/Default/description)
 endef
 
 define Build/Configure
-        ( cd $(PKG_BUILD_DIR); ./autogen.sh )
-        $(call Build/Configure/Default)
+	( cd $(PKG_BUILD_DIR); ./autogen.sh )
+	$(call Build/Configure/Default)
 endef
 
 # generic args
@@ -53,9 +54,7 @@ define Build/Compile
 	$(call Build/Compile/Default)
 endef
 define Package/zfs/install
-	$(INSTALL_DIR) $(1)/sbin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/local/bin/mergerfs $(1)/sbin
-	$(LN) mergerfs $(1)/sbin/mount.mergerfs
+
 endef
 
 $(eval $(call BuildPackage,zfs))
